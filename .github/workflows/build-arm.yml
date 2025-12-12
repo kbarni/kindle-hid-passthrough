@@ -32,8 +32,9 @@ jobs:
         run: |
           python -m nuitka \
             --mode=onefile \
-            -j $(nproc) \
-            --lto=no \
+            --jobs=$(nproc) \
+            --lto=yes \
+            --show-progress \
             --output-filename=kindle-hid-passthrough \
             --include-package=kindle_hid_passthrough \
             --include-data-file=kindle_hid_passthrough/config.ini=kindle_hid_passthrough/config.ini \

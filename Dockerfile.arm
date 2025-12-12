@@ -33,12 +33,12 @@ COPY kindle_hid_passthrough/config.ini /build/kindle_hid_passthrough/
 
 # Build with Nuitka
 # --mode=onefile creates a single executable
-# -j 4 uses 4 CPU cores for parallel compilation
-# --lto=no disables link-time optimization for faster builds
+# --lto=no disables link-time optimization (faster for QEMU emulation)
 RUN python3 -m nuitka \
     --mode=onefile \
-    -j 4 \
+    --jobs=$(nproc) \
     --lto=no \
+    --show-progress \
     --output-filename=kindle-hid-passthrough \
     --include-package=kindle_hid_passthrough \
     --include-data-file=kindle_hid_passthrough/config.ini=kindle_hid_passthrough/config.ini \
