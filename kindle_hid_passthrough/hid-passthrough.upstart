@@ -1,0 +1,14 @@
+# HID Passthrough - Bluetooth HID host with UHID passthrough
+# Requires WMT (Bluetooth hardware) to be ready
+start on started wmt
+stop on stopping filesystems
+
+expect fork
+
+script
+    /etc/init.d/hid-passthrough start
+end script
+
+post-stop script
+    /etc/init.d/hid-passthrough stop
+end script

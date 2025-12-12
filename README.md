@@ -20,14 +20,14 @@ BT HID Device  -->  /dev/stpbt  -->  Bumble (userspace BT stack)  -->  /dev/uhid
 
 ## Requirements
 
-- Python 3.8+ (soft-float build for Kindle)
-- Google Bumble >= 0.0.193
-- Root access on Kindle
-- Linux kernel with UHID support (`CONFIG_UHID`)
+- Python 3.10 (soft-float build for Kindle) - available from [kindle-stuff releases](https://github.com/nickel-lang/kindle-stuff/releases)
+- [Google Bumble](https://github.com/google/bumble) >= 0.0.193
+- Root access on Kindle (via USBNetwork or similar)
+- Linux kernel with UHID support (`CONFIG_UHID`) - enabled by default on Kindle
 
 ## Installation
 
-1. Install Python 3.8 on your Kindle at `/mnt/us/python3.8-kindle/`
+1. Install Python 3.10 on your Kindle at `/mnt/us/python3.10-kindle/`
 
 2. Copy the project to Kindle:
    ```bash
@@ -50,10 +50,10 @@ BT HID Device  -->  /dev/stpbt  -->  Bumble (userspace BT stack)  -->  /dev/uhid
 
 ```bash
 # Interactive pairing (Classic Bluetooth)
-ssh kindle "/mnt/us/python3.8-kindle/python3-wrapper.sh /mnt/us/kindle_hid_passthrough/main.py --pair --protocol classic"
+ssh kindle "/mnt/us/python3.10-kindle/python3-wrapper.sh /mnt/us/kindle_hid_passthrough/main.py --pair --protocol classic"
 
 # Interactive pairing (BLE)
-ssh kindle "/mnt/us/python3.8-kindle/python3-wrapper.sh /mnt/us/kindle_hid_passthrough/main.py --pair --protocol ble"
+ssh kindle "/mnt/us/python3.10-kindle/python3-wrapper.sh /mnt/us/kindle_hid_passthrough/main.py --pair --protocol ble"
 ```
 
 ### Running the Daemon
@@ -75,7 +75,7 @@ ssh kindle "/etc/init.d/hid-passthrough stop"
 ### Manual Execution (Debug)
 
 ```bash
-ssh kindle "/mnt/us/python3.8-kindle/python3-wrapper.sh /mnt/us/kindle_hid_passthrough/main.py"
+ssh kindle "/mnt/us/python3.10-kindle/python3-wrapper.sh /mnt/us/kindle_hid_passthrough/main.py"
 ```
 
 ## How It Works

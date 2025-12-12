@@ -106,8 +106,9 @@ class ClassicHIDHost:
         except ImportError:
             log.warning("UHID support not available")
 
-        # Events
-        self._incoming_connection_event = None
+        # Events (two-phase connection)
+        self._connection_received_event = None  # Phase 1: BT link established
+        self._connection_ready_event = None      # Phase 2: Auth done, HID registered
         self._disconnection_event = None
         self._last_report = None
         self._auth_failure_address = None  # Track address for auth failure retry
@@ -574,7 +575,8 @@ class ClassicHIDHost:
             target_address: Expected device address (for filtering)
         """
         self._disconnection_event = asyncio.Event()
-        self._incoming_connection_event = asyncio.Event()
+        self._connection_received_event = asyncio.Event()  # Phase 1: BT link established
+        self._connection_ready_event = asyncio.Event()      # Phase 2: Auth done, HID registered
 
         await self.start()
 
@@ -611,6 +613,9 @@ class ClassicHIDHost:
             # Set up disconnection handler
             connection.on('disconnection', self._on_disconnection)
 
+            # Signal that we received a connection (Phase 1)
+            self._connection_received_event.set()
+
             # Wait for device to authenticate us (don't initiate - causes collision)
             auth_event = asyncio.Event()
             def on_auth():
@@ -634,7 +639,9 @@ class ClassicHIDHost:
 
             # Register with HID host
             self.hid_host.on_device_connection(connection)
-            self._incoming_connection_event.set()
+
+            # Signal that connection is ready (Phase 2)
+            self._connection_ready_event.set()
 
         def on_connection(connection):
             asyncio.create_task(handle_connection(connection))
@@ -663,7 +670,7 @@ class ClassicHIDHost:
                         continue  # Can't actively connect to wildcard
 
                     # Stop if we already have a connection
-                    if self._incoming_connection_event.is_set():
+                    if self._connection_received_event.is_set():
                         return
 
                     try:
@@ -683,7 +690,7 @@ class ClassicHIDHost:
                         log.info(f"  {addr} connection failed: {e}")
 
                 # All devices tried, wait before retrying
-                if self._incoming_connection_event.is_set():
+                if self._connection_received_event.is_set():
                     return
                 log.info(f"Retrying active connection in {retry_interval}s...")
                 await asyncio.sleep(retry_interval)
@@ -691,9 +698,10 @@ class ClassicHIDHost:
         # Start active connection task
         active_task = asyncio.create_task(try_active_connect())
 
-        # Wait for either incoming connection or active connection to succeed
+        # Phase 1: Wait for any connection to come in (60s)
         try:
-            await asyncio.wait_for(self._incoming_connection_event.wait(), timeout=60.0)
+            await asyncio.wait_for(self._connection_received_event.wait(), timeout=60.0)
+            log.info("Connection received, waiting for handshake...")
         except asyncio.TimeoutError:
             log.warning("Connection timeout - no device connected")
             raise InvalidStateError("No device connected within timeout")
@@ -703,6 +711,13 @@ class ClassicHIDHost:
                 await active_task
             except asyncio.CancelledError:
                 pass
+
+        # Phase 2: Wait for auth/HID registration to complete (15s)
+        try:
+            await asyncio.wait_for(self._connection_ready_event.wait(), timeout=15.0)
+        except asyncio.TimeoutError:
+            log.warning("Handshake timeout - device connected but auth/HID registration failed")
+            raise InvalidStateError("Connection handshake failed")
 
         # Wait for L2CAP channels
         log.info("Waiting for HID channels...")
@@ -872,15 +887,12 @@ class ClassicHIDHost:
         # Skip header byte, get report data
         report_data = pdu[1:]
 
-        # Filter duplicates
-        if report_data == self._last_report:
-            return
-        self._last_report = report_data
+        # Log only when data changes (to reduce noise)
+        if report_data != self._last_report:
+            log.debug(f"[HID] Report: {report_data.hex()}")
+            self._last_report = report_data
 
-        # Log only when data changes (debug level to reduce noise)
-        log.debug(f"[HID] Report: {report_data.hex()}")
-
-        # Forward to UHID
+        # Always forward to UHID - don't filter duplicates for key repeat support
         if self.uhid_device:
             try:
                 self.uhid_device.send_input(report_data)

@@ -89,3 +89,27 @@ pair-ble:
 # Run manually (for debugging)
 run:
     ssh kindle "{{python}} {{remote_dir}}/main.py"
+
+# Remount root filesystem as read-write
+[private]
+remount-rw:
+    @ssh kindle "mount -o remount,rw /"
+
+# Remount root filesystem as read-only
+[private]
+remount-ro:
+    @ssh kindle "mount -o remount,ro /"
+
+# Setup autostart via Upstart
+setup-autostart: remount-rw
+    @echo "Setting up autostart..."
+    scp {{src_dir}}/kindle_hid_passthrough/hid-passthrough.upstart kindle:/etc/upstart/hid-passthrough.conf
+    @just remount-ro
+    @echo "Autostart configured! Service will start on next boot."
+
+# Remove autostart
+remove-autostart: remount-rw
+    @echo "Removing autostart..."
+    ssh kindle "rm -f /etc/upstart/hid-passthrough.conf"
+    @just remount-ro
+    @echo "Autostart removed."
