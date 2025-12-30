@@ -20,7 +20,7 @@ BT HID Device  -->  /dev/stpbt  -->  Bumble (userspace BT stack)  -->  /dev/uhid
 
 ## Requirements
 
-- Python 3.10 (soft-float build for Kindle) - available from [kindle-stuff releases](https://github.com/nickel-lang/kindle-stuff/releases)
+- Python 3.10 for Kindle - available from [MobileRead forums](https://www.mobileread.com/forums/showthread.php?t=367713)
 - [Google Bumble](https://github.com/google/bumble) >= 0.0.193
 - Root access on Kindle (via USBNetwork or similar)
 - Linux kernel with UHID support (`CONFIG_UHID`) - enabled by default on Kindle
