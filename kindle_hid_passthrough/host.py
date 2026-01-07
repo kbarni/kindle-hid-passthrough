@@ -16,7 +16,7 @@ import logging
 from typing import Optional, List, Dict
 
 from bumble.device import Device, Peer
-from bumble.hci import Address, HCI_Reset_Command
+from bumble.hci import Address, HCI_Reset_Command, OwnAddressType
 from bumble.gatt import (
     GATT_GENERIC_ACCESS_SERVICE,
     GATT_DEVICE_NAME_CHARACTERISTIC,
@@ -204,8 +204,11 @@ class BLEHIDHost:
         target = Address(address)
         try:
             self.connection = await asyncio.wait_for(
-                self.device.connect(target),
-                timeout=config.connect_timeout
+                self.device.connect(
+                    target,
+                    own_address_type=OwnAddressType.PUBLIC
+                ),
+                timeout=config.connect_timeout,
             )
         except Exception as e:
             log.error(f"Connection failed: {e}")
@@ -311,7 +314,7 @@ class BLEHIDHost:
         target = Address(target_address)
         try:
             self.connection = await asyncio.wait_for(
-                self.device.connect(target),
+                self.device.connect(target, own_address_type=OwnAddressType.PUBLIC),
                 timeout=config.connect_timeout
             )
         except asyncio.TimeoutError:
