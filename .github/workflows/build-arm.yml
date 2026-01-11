@@ -10,16 +10,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -33,27 +28,46 @@ jobs:
             --load \
             .
 
-      - name: Extract binary
+      - name: Extract binary and syscall wrapper
         run: |
           CONTAINER_ID=$(docker create kindle-hid-passthrough-builder)
-          docker cp "$CONTAINER_ID:/build/kindle-hid-passthrough" ./kindle-hid-passthrough
+          mkdir -p dist
+          docker cp "$CONTAINER_ID:/build/kindle-hid-passthrough" ./dist/kindle-hid-passthrough
+          docker cp "$CONTAINER_ID:/build/libsyscall_wrapper.so" ./dist/libsyscall_wrapper.so
           docker rm "$CONTAINER_ID"
+
+      - name: Create wrapper script
+        run: |
+          cat > dist/run.sh << 'EOF'
+          #!/bin/sh
+          # Wrapper script for kindle-hid-passthrough with syscall compatibility
+          SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+          export TMPDIR="${SCRIPT_DIR}"
+          export KINDLE_HID_BASE="${SCRIPT_DIR}"
+          export LD_PRELOAD="${SCRIPT_DIR}/libsyscall_wrapper.so"
+          exec "${SCRIPT_DIR}/kindle-hid-passthrough" "$@"
+          EOF
+          chmod +x dist/run.sh
+          chmod +x dist/kindle-hid-passthrough
 
       - name: Show binary info
         run: |
-          file kindle-hid-passthrough
-          ls -lh kindle-hid-passthrough
+          file dist/kindle-hid-passthrough dist/libsyscall_wrapper.so
+          ls -lh dist/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: kindle-hid-passthrough-armv7
-          path: kindle-hid-passthrough
+          path: dist/
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
         with:
-          files: kindle-hid-passthrough
+          files: |
+            dist/kindle-hid-passthrough
+            dist/libsyscall_wrapper.so
+            dist/run.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
