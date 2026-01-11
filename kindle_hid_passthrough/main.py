@@ -162,6 +162,8 @@ def main():
 
     args = parser.parse_args()
 
+    log.info(f"Config base path: {config.base_path}")
+
     # Determine protocol
     if args.protocol:
         protocol = Protocol.CLASSIC if args.protocol == 'classic' else Protocol.BLE
@@ -179,7 +181,7 @@ def main():
         device_config = config.get_device_config()
         if device_config:
             address, protocol = device_config
-            log.info(f"Using device from devices.conf: {address}")
+            log.info(f"Using device from {config.devices_config_file}: {address}")
         else:
             log.error("No device address specified. Use --address or create devices.conf")
             log.info("Run with --pair to set up a new device")

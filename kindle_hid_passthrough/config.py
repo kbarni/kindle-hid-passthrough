@@ -37,9 +37,39 @@ class Config:
             self._load()
             self._loaded = True
 
+    def _determine_base_path(self):
+        """Determine base path dynamically.
+
+        Priority:
+        1. KINDLE_HID_BASE environment variable (set by run.sh)
+        2. Derive from package location
+        3. Fallback to /mnt/us/kindle_hid_passthrough
+        """
+        if os.environ.get('KINDLE_HID_BASE'):
+            self.base_path = os.environ['KINDLE_HID_BASE']
+            return
+
+        # Try to derive from package location
+        # __file__ is kindle_hid_passthrough/config.py
+        pkg_dir = os.path.dirname(os.path.abspath(__file__))
+        potential_base = os.path.dirname(pkg_dir)
+
+        # Check if this looks like our install directory
+        if os.path.exists(os.path.join(potential_base, 'run.sh')):
+            self.base_path = potential_base
+            return
+
+        # For Nuitka onefile builds, check TMPDIR or current working directory
+        if os.environ.get('TMPDIR') and os.path.exists(os.path.join(os.environ['TMPDIR'], 'run.sh')):
+            self.base_path = os.environ['TMPDIR']
+            return
+
+        # Fallback
+        self.base_path = '/mnt/us/kindle_hid_passthrough'
+
     def _load(self):
         """Load configuration from config.ini or use defaults"""
-        self.base_path = '/mnt/us/kindle_hid_passthrough'
+        self._determine_base_path()
 
         config_file = os.path.join(self.base_path, 'config.ini')
         self._parser = configparser.ConfigParser()
