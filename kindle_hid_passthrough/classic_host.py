@@ -257,7 +257,7 @@ class ClassicHIDHost:
             if dev['name'] == 'Unknown':
                 try:
                     name = await asyncio.wait_for(
-                        self.device.request_remote_name(Address(dev['address'])),
+                        self.device.request_remote_name(Address(dev['address'], Address.PUBLIC_DEVICE_ADDRESS)),
                         timeout=3.0
                     )
                     if name:
@@ -294,7 +294,7 @@ class ClassicHIDHost:
 
         # Connect to the device
         try:
-            target_address = Address(address)
+            target_address = Address(address, Address.PUBLIC_DEVICE_ADDRESS)
             self.connection = await asyncio.wait_for(
                 self.device.connect(target_address, transport=BT_BR_EDR_TRANSPORT),
                 timeout=config.connect_timeout
@@ -675,7 +675,7 @@ class ClassicHIDHost:
 
                     try:
                         log.info(f"Trying to connect to {addr}...")
-                        target = Address(addr)
+                        target = Address(addr, Address.PUBLIC_DEVICE_ADDRESS)
                         connection = await asyncio.wait_for(
                             self.device.connect(target, transport=BT_BR_EDR_TRANSPORT),
                             timeout=5.0
