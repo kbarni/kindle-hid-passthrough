@@ -1,19 +1,21 @@
 # Dockerfile for building Kindle HID Passthrough ARM binary
-# Uses Python 3.10 to match Kindle runtime
+# Uses Nuitka with special ARM flags to handle branch range issues
 # Target: ARMv7 hard-float (armhf)
 
-FROM arm32v7/python:3.10-slim-bullseye
+# Use Alpine with musl libc - produces more portable static binaries
+FROM arm32v7/python:3.11-alpine
 
-# Install build dependencies with retry for flaky network under QEMU
-RUN for i in 1 2 3; do \
-        apt-get update && \
-        apt-get install -y --no-install-recommends \
-            build-essential \
-            patchelf \
-            ccache \
-            libffi-dev \
-        && break || sleep 5; \
-    done && rm -rf /var/lib/apt/lists/*
+# Install build dependencies including Rust for some Python packages
+RUN apk add --no-cache \
+    build-base \
+    patchelf \
+    ccache \
+    libffi-dev \
+    zlib-dev \
+    linux-headers \
+    openssl-dev \
+    rust \
+    cargo
 
 # Install Python build tools and dependencies
 RUN pip install --no-cache-dir \
@@ -27,22 +29,39 @@ RUN pip install --no-cache-dir \
 ENV CCACHE_DIR=/ccache
 ENV PATH="/usr/lib/ccache:${PATH}"
 
-# ARM-specific fix: -mword-relocations fixes "conditional branch out of range" error
-# that occurs with large generated code (like bumble.hci module)
-ENV CFLAGS="-mword-relocations"
-
-# Set working directory
 WORKDIR /build
 
 # Copy source files
 COPY kindle_hid_passthrough/*.py /build/kindle_hid_passthrough/
 COPY kindle_hid_passthrough/config.ini /build/kindle_hid_passthrough/
 
+# ARM-specific compiler flags to fix branch range errors:
+# -mword-relocations: Use word-sized relocations for position-independent code
+# -mlong-calls: Generate long call sequences for distant functions
+# -ffunction-sections -fdata-sections: Enable linker garbage collection
+ENV CFLAGS="-mword-relocations -mlong-calls -ffunction-sections -fdata-sections"
+ENV LDFLAGS="-Wl,--gc-sections"
+
+# Build syscall wrapper library for Kindle kernel compatibility
+# Kindle kernel 4.9.77 is missing pwritev2/preadv2 syscalls
+RUN printf '%s\n' \
+    '#define _GNU_SOURCE' \
+    '#include <sys/uio.h>' \
+    '#include <unistd.h>' \
+    '' \
+    'ssize_t preadv2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags) {' \
+    '    return preadv(fd, iov, iovcnt, offset);' \
+    '}' \
+    '' \
+    'ssize_t pwritev2(int fd, const struct iovec *iov, int iovcnt, off_t offset, int flags) {' \
+    '    return pwritev(fd, iov, iovcnt, offset);' \
+    '}' \
+    > /build/syscall_wrapper.c && \
+    gcc -shared -fPIC -o /build/libsyscall_wrapper.so /build/syscall_wrapper.c && \
+    strip /build/libsyscall_wrapper.so
+
 # Build with Nuitka
-# --mode=onefile creates a single executable
-# --lto=no disables link-time optimization (faster for QEMU emulation)
-# --low-memory reduces memory usage during compilation
-# -mword-relocations passed via CFLAGS fixes ARM branch range issues
+# ARM compiler flags handle branch range issues for large modules like bumble.hci
 RUN python3 -m nuitka \
     --mode=onefile \
     --jobs=$(nproc) \
@@ -58,3 +77,4 @@ RUN python3 -m nuitka \
     kindle_hid_passthrough/main.py
 
 # Output will be at /build/kindle-hid-passthrough
+# and /build/libsyscall_wrapper.so
