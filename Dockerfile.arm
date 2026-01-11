@@ -68,7 +68,7 @@ RUN python3 -m nuitka \
     --lto=no \
     --low-memory \
     --show-progress \
-    --output-filename=kindle-hid-passthrough \
+    --output-filename=kindle-hid-passthrough.bin \
     --include-package=kindle_hid_passthrough \
     --include-data-file=kindle_hid_passthrough/config.ini=kindle_hid_passthrough/config.ini \
     --nofollow-import-to=pytest \
@@ -76,5 +76,58 @@ RUN python3 -m nuitka \
     --nofollow-import-to=setuptools \
     kindle_hid_passthrough/main.py
 
-# Output will be at /build/kindle-hid-passthrough
-# and /build/libsyscall_wrapper.so
+# Build C wrapper that sets up LD_PRELOAD and execs the real binary
+# This eliminates the need for run.sh
+RUN printf '%s\n' \
+    '#define _GNU_SOURCE' \
+    '#include <stdio.h>' \
+    '#include <stdlib.h>' \
+    '#include <string.h>' \
+    '#include <unistd.h>' \
+    '#include <libgen.h>' \
+    '#include <linux/limits.h>' \
+    '' \
+    'int main(int argc, char *argv[]) {' \
+    '    char exe_path[PATH_MAX];' \
+    '    char dir_path[PATH_MAX];' \
+    '    char bin_path[PATH_MAX];' \
+    '    char lib_path[PATH_MAX];' \
+    '    ssize_t len;' \
+    '' \
+    '    /* Get path to this executable */' \
+    '    len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);' \
+    '    if (len == -1) {' \
+    '        perror("readlink");' \
+    '        return 1;' \
+    '    }' \
+    '    exe_path[len] = '"'"'\0'"'"';' \
+    '' \
+    '    /* Get directory */' \
+    '    strncpy(dir_path, exe_path, sizeof(dir_path));' \
+    '    char *dir = dirname(dir_path);' \
+    '' \
+    '    /* Build paths */' \
+    '    snprintf(bin_path, sizeof(bin_path), "%s/kindle-hid-passthrough.bin", dir);' \
+    '    snprintf(lib_path, sizeof(lib_path), "%s/libsyscall_wrapper.so", dir);' \
+    '' \
+    '    /* Set environment */' \
+    '    setenv("LD_PRELOAD", lib_path, 1);' \
+    '    setenv("KINDLE_HID_BASE", dir, 1);' \
+    '    setenv("TMPDIR", dir, 1);' \
+    '' \
+    '    /* Exec the real binary */' \
+    '    argv[0] = bin_path;' \
+    '    execv(bin_path, argv);' \
+    '' \
+    '    /* If we get here, exec failed */' \
+    '    perror("execv");' \
+    '    return 1;' \
+    '}' \
+    > /build/wrapper.c && \
+    gcc -static -o /build/kindle-hid-passthrough /build/wrapper.c && \
+    strip /build/kindle-hid-passthrough
+
+# Output:
+# /build/kindle-hid-passthrough     - C wrapper (entry point)
+# /build/kindle-hid-passthrough.bin - Nuitka Python binary
+# /build/libsyscall_wrapper.so      - Syscall compatibility shim
