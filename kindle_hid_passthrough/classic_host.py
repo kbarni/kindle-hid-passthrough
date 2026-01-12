@@ -665,7 +665,7 @@ class ClassicHIDHost:
             retry_interval = 5.0  # Seconds between retry rounds
 
             while True:
-                for addr, protocol in devices:
+                for addr, protocol, _ in devices:
                     if addr == '*':
                         continue  # Can't actively connect to wildcard
 

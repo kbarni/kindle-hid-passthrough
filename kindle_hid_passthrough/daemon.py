@@ -5,12 +5,14 @@ Kindle HID Passthrough - Daemon
 Persistent connection manager for Bluetooth HID devices.
 Maintains connection with auto-reconnect.
 
+Uses StateMachine for explicit state tracking.
+
 For use with init scripts / systemd.
 
 Author: Lucas Zampieri <lzampier@redhat.com>
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 import asyncio
 import logging
@@ -19,20 +21,26 @@ import sys
 
 sys.path.insert(0, '/mnt/us/kindle_hid_passthrough')
 
-from config import config, create_host
+from config import config, create_host, create_unified_host, get_configured_protocols
 from logging_utils import setup_daemon_logging
+from state_machine import HostState
 
 logger = logging.getLogger(__name__)
 
 
 class HIDDaemon:
-    """Daemon that maintains persistent connection to an HID device."""
+    """Daemon that maintains persistent connection to an HID device.
+
+    Uses the host's StateMachine to track connection state and make
+    informed decisions about reconnection.
+    """
 
     def __init__(self):
         self.device_address = None
         self.protocol = None
         self.running = False
         self.host = None
+        self.use_unified = False  # True if mixed protocols configured
 
     def load_device(self) -> bool:
         """Load device(s) from config file."""
@@ -42,16 +50,30 @@ class HIDDaemon:
             return False
 
         # Use first device's protocol, but we'll accept any from the list
-        self.device_address, self.protocol = devices[0]
+        self.device_address, self.protocol, name = devices[0]
+
+        # Check if we have mixed protocols
+        protocols = get_configured_protocols()
+        self.use_unified = len(protocols) > 1
+
+        if self.use_unified:
+            proto_names = ', '.join(p.value for p in protocols)
+            logger.info(f"Mixed protocols detected ({proto_names}), using unified host")
 
         if len(devices) == 1 and self.device_address != '*':
-            logger.info(f"Device: {self.device_address} ({self.protocol.value})")
+            display = f"{name} ({self.device_address})" if name else self.device_address
+            logger.info(f"Device: {display} ({self.protocol.value})")
         else:
-            logger.info(f"Accepting {len(devices)} device(s) ({self.protocol.value}):")
-            for addr, proto in devices:
-                logger.info(f"  - {addr} ({proto.value})")
+            logger.info(f"Accepting {len(devices)} device(s):")
+            for addr, proto, dev_name in devices:
+                display = f"{dev_name} ({addr})" if dev_name else addr
+                logger.info(f"  - {display} ({proto.value})")
 
         return True
+
+    def _on_state_change(self, old_state: HostState, new_state: HostState):
+        """Handle host state transitions."""
+        logger.debug(f"Host state: {old_state.name} -> {new_state.name}")
 
     async def run(self):
         """Main daemon loop."""
@@ -63,9 +85,19 @@ class HIDDaemon:
         logger.info(f"HID Daemon v{__version__}")
 
         while self.running:
+            skip_delay = False
+
             try:
                 logger.info("=== Starting connection ===")
-                self.host = create_host(self.protocol)
+                if self.use_unified:
+                    self.host = create_unified_host()
+                else:
+                    self.host = create_host(self.protocol)
+
+                # Register state change listener
+                if hasattr(self.host, 'state_machine'):
+                    self.host.state_machine.add_listener(self._on_state_change)
+
                 await self.host.run(self.device_address)
 
             except asyncio.CancelledError:
@@ -75,6 +107,11 @@ class HIDDaemon:
             except Exception as e:
                 logger.error(f"Error: {e}")
 
+                # Check host state for more context
+                if self.host and hasattr(self.host, 'state'):
+                    state = self.host.state
+                    logger.debug(f"Host state at error: {state.name}")
+
             finally:
                 # Check for auth failure before cleanup
                 auth_fail_addr = None
@@ -82,6 +119,10 @@ class HIDDaemon:
                     auth_fail_addr = self.host.get_auth_failure_address()
 
                 if self.host:
+                    # Remove state listener before cleanup
+                    if hasattr(self.host, 'state_machine'):
+                        self.host.state_machine.remove_listener(self._on_state_change)
+
                     try:
                         await self.host.cleanup()
                     except Exception:
@@ -92,22 +133,25 @@ class HIDDaemon:
                     logger.info(f"Auth failure detected for {auth_fail_addr}")
                     try:
                         # Create new host just for key cleanup
-                        temp_host = create_host(self.protocol)
+                        if self.use_unified:
+                            temp_host = create_unified_host()
+                        else:
+                            temp_host = create_host(self.protocol)
                         if hasattr(temp_host, 'clear_stale_key'):
                             await temp_host.clear_stale_key(auth_fail_addr)
                     except Exception as e:
                         logger.warning(f"Failed to clear stale key: {e}")
                     logger.info("Retrying connection immediately...")
-                    self.host = None
-                    continue  # Skip the delay, retry now
+                    skip_delay = True
 
                 self.host = None
 
             if not self.running:
                 break
 
-            logger.info(f"Reconnecting in {config.reconnect_delay}s...")
-            await asyncio.sleep(config.reconnect_delay)
+            if not skip_delay:
+                logger.info(f"Reconnecting in {config.reconnect_delay}s...")
+                await asyncio.sleep(config.reconnect_delay)
 
         logger.info("Daemon stopped")
 
@@ -120,6 +164,13 @@ class HIDDaemon:
                 await self.host.cleanup()
             except Exception:
                 pass
+
+    @property
+    def host_state(self) -> HostState:
+        """Get current host state, or IDLE if no host."""
+        if self.host and hasattr(self.host, 'state'):
+            return self.host.state
+        return HostState.IDLE
 
 
 async def main():

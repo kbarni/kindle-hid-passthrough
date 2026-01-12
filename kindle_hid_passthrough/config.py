@@ -12,7 +12,7 @@ import os
 from typing import Optional
 from enum import Enum
 
-__all__ = ['config', 'Config', 'Protocol']
+__all__ = ['config', 'Config', 'Protocol', 'create_host', 'create_scanner', 'create_unified_host']
 
 
 class Protocol(Enum):
@@ -120,31 +120,27 @@ class Config:
             return default
 
     def get_device_config(self) -> Optional[tuple]:
-        """Load first device address and protocol from devices.conf.
-
-        Format:
-            ADDRESS                    # Uses default protocol
-            ADDRESS ble               # Explicit BLE
-            ADDRESS classic           # Explicit Classic Bluetooth
+        """Load first device address, protocol, and name from devices.conf.
 
         Returns:
-            Tuple of (address, protocol) or None if not configured
+            Tuple of (address, protocol, name) or None if not configured
         """
         devices = self.get_all_devices()
         return devices[0] if devices else None
 
     def get_all_devices(self) -> list:
-        """Load all device addresses and protocols from devices.conf.
+        """Load all devices from devices.conf.
 
         Format:
             ADDRESS                    # Uses default protocol
             ADDRESS ble               # Explicit BLE
             ADDRESS classic           # Explicit Classic Bluetooth
+            ADDRESS classic DeviceName # With device name
             # comment                  # Ignored
             * classic                  # Wildcard - accept any device
 
         Returns:
-            List of tuples (address, protocol). Address may be '*' for wildcard.
+            List of tuples (address, protocol, name). Name may be None.
         """
         if not os.path.exists(self.devices_config_file):
             return []
@@ -154,10 +150,11 @@ class Config:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#'):
-                    parts = line.split()
+                    parts = line.split(None, 2)  # Split into max 3 parts
                     address = parts[0]
                     protocol = self._parse_protocol(parts[1]) if len(parts) > 1 else self.protocol
-                    devices.append((address, protocol))
+                    name = parts[2] if len(parts) > 2 else None
+                    devices.append((address, protocol, name))
 
         return devices
 
@@ -185,7 +182,7 @@ class Config:
 
         addr_norm = self._normalize_address(address)
 
-        for dev_addr, protocol in devices:
+        for dev_addr, protocol, _ in devices:
             # Wildcard - accept any device
             if dev_addr == '*':
                 return (True, protocol)
@@ -216,6 +213,44 @@ def create_host(protocol: Protocol = None, transport_spec: str = None):
     else:
         from host import BLEHIDHost
         return BLEHIDHost(transport_spec)
+
+
+def create_scanner(transport_spec: str = None):
+    """Factory function to create a unified BLE+Classic scanner.
+
+    Args:
+        transport_spec: HCI transport specification (default: from config)
+
+    Returns:
+        UnifiedScanner instance
+    """
+    from unified_scanner import UnifiedScanner
+    return UnifiedScanner(transport_spec)
+
+
+def create_unified_host(transport_spec: str = None):
+    """Factory function to create a unified BLE+Classic host.
+
+    Use this when devices.conf contains devices of both protocols.
+
+    Args:
+        transport_spec: HCI transport specification (default: from config)
+
+    Returns:
+        UnifiedHIDHost instance
+    """
+    from unified_host import UnifiedHIDHost
+    return UnifiedHIDHost(transport_spec)
+
+
+def get_configured_protocols() -> set:
+    """Get the set of protocols configured in devices.conf.
+
+    Returns:
+        Set of Protocol enums (may contain BLE, CLASSIC, or both)
+    """
+    devices = config.get_all_devices()
+    return {d[1] for d in devices}
 
 
 # Global singleton instance
