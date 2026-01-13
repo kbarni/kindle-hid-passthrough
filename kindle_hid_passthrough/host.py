@@ -427,17 +427,22 @@ class BLEHIDHost:
         """Subscribe to HID input report notifications."""
         for report_id, char in self.hid_reports.items():
             try:
-                await self.peer.subscribe(char, self._on_hid_report)
+                # Capture report_id in lambda closure
+                await self.peer.subscribe(
+                    char, 
+                    lambda value, rid=report_id: self._on_hid_report(rid, value)
+                )
                 log.success(f"Subscribed to report {report_id}")
             except Exception as e:
                 log.warning(f"Failed to subscribe to report {report_id}: {e}")
 
-    def _on_hid_report(self, value):
+    def _on_hid_report(self, report_id, value):
         """Handle incoming HID report."""
         data = bytes(value)
         if self.uhid_device:
             try:
-                self.uhid_device.send_input(data)
+                # Prepend report ID for UHID
+                self.uhid_device.send_input(bytes([report_id]) + data)
             except Exception as e:
                 log.warning(f"UHID send failed: {e}")
 
