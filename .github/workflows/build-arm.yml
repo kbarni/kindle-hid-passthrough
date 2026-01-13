@@ -43,19 +43,24 @@ jobs:
           file dist/*
           ls -lh dist/
 
+      - name: Create tarball
+        run: |
+          VERSION="${GITHUB_REF_NAME:-dev}"
+          tar -czvf "kindle-hid-passthrough-${VERSION}-armv7.tar.gz" -C dist .
+          ls -lh *.tar.gz
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: kindle-hid-passthrough-armv7
-          path: dist/
+          path: |
+            dist/
+            *.tar.gz
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            dist/kindle-hid-passthrough
-            dist/kindle-hid-passthrough.bin
-            dist/libsyscall_wrapper.so
+          files: kindle-hid-passthrough-${{ github.ref_name }}-armv7.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
