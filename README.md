@@ -13,8 +13,10 @@ BT HID Device  -->  /dev/stpbt  -->  Bumble (userspace BT stack)  -->  /dev/uhid
 ## Features
 
 - **Generic HID support** - Works with any Bluetooth HID device (Classic or BLE)
+- **Mixed protocol support** - Configure both BLE and Classic devices simultaneously
 - **UHID passthrough** - Devices appear as native Linux input devices
 - **Auto-reconnection** - Daemon mode with automatic reconnection
+- **Hybrid connection** - Passive (device connects) + active (host connects) for Classic
 - **SDP descriptor query** - Fetches real HID report descriptors from devices
 - **Pairing support** - Interactive pairing with link key persistence
 
@@ -79,6 +81,26 @@ ssh kindle "stop hid-passthrough"
 ssh kindle "tail -f /var/log/hid_passthrough.log"
 ```
 
+### Device Configuration
+
+Paired devices are stored in `devices.conf`:
+
+```bash
+# Format: ADDRESS PROTOCOL [NAME]
+98:B9:EA:01:67:68/P classic Xbox Wireless Controller
+5C:2B:3E:50:4F:04/P ble BLE-M3
+```
+
+**Mixed Protocol Support**: You can configure both BLE and Classic devices. The daemon automatically detects mixed protocols and uses a unified host that handles both simultaneously - the first device to connect wins.
+
+```bash
+# View configured devices
+ssh kindle "cat /mnt/us/kindle_hid_passthrough/devices.conf"
+
+# Edit devices (add/remove)
+ssh kindle "vi /mnt/us/kindle_hid_passthrough/devices.conf"
+```
+
 ## How It Works
 
 ### Why Userspace?
@@ -123,6 +145,8 @@ Tested on:
 just deploy      # Deploy files to Kindle
 just restart     # Restart daemon
 just logs        # Follow logs
+just devices     # Show configured devices
+just keys        # Show pairing keys
 ```
 
 ## References

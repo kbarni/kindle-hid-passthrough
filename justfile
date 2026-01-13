@@ -65,6 +65,18 @@ clear-cache:
 show-cache:
     ssh kindle "ls -lh {{remote_dir}}/cache/ 2>/dev/null || echo 'Empty'"
 
+# Show configured devices
+devices:
+    @ssh kindle "cat {{remote_dir}}/devices.conf 2>/dev/null || echo 'No devices configured'"
+
+# Edit devices.conf
+edit-devices:
+    ssh kindle "vi {{remote_dir}}/devices.conf"
+
+# Show pairing keys
+keys:
+    @ssh kindle "cat {{remote_dir}}/cache/pairing_keys.json 2>/dev/null | python3 -m json.tool || echo 'No pairing keys'"
+
 # SSH into Kindle
 ssh:
     ssh kindle
