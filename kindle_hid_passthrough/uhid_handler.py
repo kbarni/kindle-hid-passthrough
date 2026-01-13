@@ -173,6 +173,7 @@ class UHIDDevice:
             logger.info(f"Created UHID device: {self.name} "
                        f"(vendor=0x{self.vendor:04x}, product=0x{self.product:04x}, "
                        f"rd_size={len(self.report_descriptor)})")
+            
         except OSError as e:
             raise UHIDError(f"Failed to create device: {e}")
 
