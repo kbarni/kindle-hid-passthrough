@@ -41,27 +41,11 @@ class Config:
         """Determine base path dynamically.
 
         Priority:
-        1. KINDLE_HID_BASE environment variable (set by run.sh)
-        2. Derive from package location
-        3. Fallback to /mnt/us/kindle_hid_passthrough
+        1. KINDLE_HID_BASE environment variable (set by C wrapper)
+        2. Fallback to /mnt/us/kindle_hid_passthrough
         """
         if os.environ.get('KINDLE_HID_BASE'):
             self.base_path = os.environ['KINDLE_HID_BASE']
-            return
-
-        # Try to derive from package location
-        # __file__ is kindle_hid_passthrough/config.py
-        pkg_dir = os.path.dirname(os.path.abspath(__file__))
-        potential_base = os.path.dirname(pkg_dir)
-
-        # Check if this looks like our install directory
-        if os.path.exists(os.path.join(potential_base, 'run.sh')):
-            self.base_path = potential_base
-            return
-
-        # For Nuitka onefile builds, check TMPDIR or current working directory
-        if os.environ.get('TMPDIR') and os.path.exists(os.path.join(os.environ['TMPDIR'], 'run.sh')):
-            self.base_path = os.environ['TMPDIR']
             return
 
         # Fallback

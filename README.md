@@ -20,28 +20,31 @@ BT HID Device  -->  /dev/stpbt  -->  Bumble (userspace BT stack)  -->  /dev/uhid
 
 ## Requirements
 
-- Python 3.10 for Kindle - available from [MobileRead forums](https://www.mobileread.com/forums/showthread.php?t=367713)
-- [Google Bumble](https://github.com/google/bumble) >= 0.0.193
 - Root access on Kindle (via USBNetwork or similar)
 - Linux kernel with UHID support (`CONFIG_UHID`) - enabled by default on Kindle
 
-## Installation
+## Deployment
 
-1. Install Python 3.10 on your Kindle at `/mnt/us/python3.10-kindle/`
+Pre-built ARM binaries are available from [GitHub Releases](https://github.com/zampierilucas/kindle-hid-passthrough/releases).
 
-2. Copy the project to Kindle:
+1. Download the release files:
+   - `kindle-hid-passthrough` - C wrapper (entry point)
+   - `kindle-hid-passthrough.bin` - Main binary
+   - `libsyscall_wrapper.so` - Syscall compatibility shim
+
+2. Copy all files to Kindle:
    ```bash
-   scp -r kindle_hid_passthrough kindle:/mnt/us/kindle_hid_passthrough/
+   scp kindle-hid-passthrough kindle-hid-passthrough.bin libsyscall_wrapper.so kindle:/mnt/us/kindle_hid_passthrough/
    ```
 
-3. Install the init script:
-   ```bash
-   ssh kindle "cp /mnt/us/kindle_hid_passthrough/hid-passthrough.init /etc/init.d/hid-passthrough && chmod +x /etc/init.d/hid-passthrough"
-   ```
-
-4. Configure your device in `/mnt/us/kindle_hid_passthrough/devices.conf`:
+3. Configure your device in `/mnt/us/kindle_hid_passthrough/devices.conf`:
    ```
    AA:BB:CC:DD:EE:FF classic
+   ```
+
+4. (Optional) Install the upstart config for autostart:
+   ```bash
+   scp hid-passthrough.conf kindle:/etc/upstart/
    ```
 
 ## Usage
@@ -50,32 +53,24 @@ BT HID Device  -->  /dev/stpbt  -->  Bumble (userspace BT stack)  -->  /dev/uhid
 
 ```bash
 # Interactive pairing (Classic Bluetooth)
-ssh kindle "/mnt/us/python3.10-kindle/python3-wrapper.sh /mnt/us/kindle_hid_passthrough/main.py --pair --protocol classic"
+ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --pair --protocol classic"
 
 # Interactive pairing (BLE)
-ssh kindle "/mnt/us/python3.10-kindle/python3-wrapper.sh /mnt/us/kindle_hid_passthrough/main.py --pair --protocol ble"
+ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --pair --protocol ble"
 ```
 
 ### Running the Daemon
 
 ```bash
-# Start daemon
-ssh kindle "/etc/init.d/hid-passthrough start"
+# Run directly
+ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --daemon"
 
-# Check status
-ssh kindle "/etc/init.d/hid-passthrough status"
+# Or via upstart (if installed)
+ssh kindle "start hid-passthrough"
+ssh kindle "stop hid-passthrough"
 
 # View logs
 ssh kindle "tail -f /var/log/hid_passthrough.log"
-
-# Stop daemon
-ssh kindle "/etc/init.d/hid-passthrough stop"
-```
-
-### Manual Execution (Debug)
-
-```bash
-ssh kindle "/mnt/us/python3.10-kindle/python3-wrapper.sh /mnt/us/kindle_hid_passthrough/main.py"
 ```
 
 ## How It Works
@@ -118,29 +113,10 @@ Tested on:
 
 ## Development
 
-### Deploy to Kindle
-
 ```bash
 just deploy      # Deploy files to Kindle
 just restart     # Restart daemon
 just logs        # Follow logs
-```
-
-### Project Structure
-
-```
-kindle_hid_passthrough/
-├── main.py              # Entry point (--pair, --daemon modes)
-├── daemon.py            # Daemon with auto-reconnect
-├── config.py            # Configuration management
-├── host.py              # BLE HID host implementation
-├── classic_host.py      # Classic Bluetooth HID host
-├── uhid_handler.py      # UHID device creation
-├── pairing.py           # Pairing and keystore
-├── device_cache.py      # Report descriptor caching
-├── logging_utils.py     # Logging utilities
-├── devices.conf         # Device configuration
-└── hid-passthrough.init # Init script
 ```
 
 ## References
