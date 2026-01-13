@@ -9,8 +9,6 @@ all HID reports directly to Linux via UHID.
 Author: Lucas Zampieri <lzampier@redhat.com>
 """
 
-__version__ = "2.0.0"
-
 import asyncio
 import logging
 from typing import Optional, List, Dict
@@ -38,7 +36,7 @@ from logging_utils import log
 from device_cache import DeviceCache
 from pairing import create_pairing_config, create_keystore
 
-__all__ = ['BLEHIDHost', '__version__']
+__all__ = ['BLEHIDHost']
 
 # HID Report Types
 HID_REPORT_TYPE_INPUT = 1
@@ -97,6 +95,7 @@ class BLEHIDHost:
 
     async def start(self):
         """Initialize the Bumble device and BLE stack."""
+        from __init__ import __version__
         log.info(f"BLE HID Host v{__version__}")
         log.info("Opening transport...")
 

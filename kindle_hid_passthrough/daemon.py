@@ -12,8 +12,6 @@ For use with init scripts / systemd.
 Author: Lucas Zampieri <lzampier@redhat.com>
 """
 
-__version__ = "2.1.0"
-
 import asyncio
 import logging
 import signal
@@ -24,6 +22,7 @@ sys.path.insert(0, '/mnt/us/kindle_hid_passthrough')
 from config import config, create_host, create_unified_host, get_configured_protocols
 from logging_utils import setup_daemon_logging
 from state_machine import HostState
+from __init__ import __version__
 
 logger = logging.getLogger(__name__)
 

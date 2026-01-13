@@ -8,8 +8,6 @@ BLE and Classic handlers on a single Bumble Device.
 Author: Lucas Zampieri <lzampier@redhat.com>
 """
 
-__version__ = "1.0.0"
-
 import asyncio
 from typing import Optional, List, Tuple
 from dataclasses import dataclass
@@ -42,7 +40,7 @@ from pairing import create_pairing_config, create_keystore
 from device_cache import DeviceCache
 from state_machine import StateMachine, HostState
 
-__all__ = ['UnifiedHIDHost', '__version__']
+__all__ = ['UnifiedHIDHost']
 
 # HID Report Types
 HID_REPORT_TYPE_INPUT = 1
@@ -149,6 +147,7 @@ class UnifiedHIDHost:
 
     async def start(self):
         """Initialize the Bumble device with both protocols."""
+        from __init__ import __version__
         self.state_machine.transition(HostState.STARTING)
 
         log.info(f"Unified HID Host v{__version__}")

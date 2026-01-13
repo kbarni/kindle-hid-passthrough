@@ -9,8 +9,6 @@ Forwards all HID reports directly to Linux via UHID.
 Author: Lucas Zampieri <lzampier@redhat.com>
 """
 
-__version__ = "2.0.0"
-
 import asyncio
 import logging
 from typing import Optional, List, Dict
@@ -49,7 +47,7 @@ from logging_utils import log
 from pairing import create_pairing_config, create_keystore
 from device_cache import DeviceCache
 
-__all__ = ['ClassicHIDHost', '__version__']
+__all__ = ['ClassicHIDHost']
 
 
 class ClassicHIDHost:
@@ -115,6 +113,7 @@ class ClassicHIDHost:
 
     async def start(self):
         """Initialize the Bumble device and Classic Bluetooth stack."""
+        from __init__ import __version__
         log.info(f"Classic HID Host v{__version__}")
         log.info("Opening transport...")
 

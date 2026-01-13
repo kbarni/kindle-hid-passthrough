@@ -8,8 +8,6 @@ Allows BLE/Classic HID devices to appear as native Linux input devices.
 Author: Lucas Zampieri <lzampier@redhat.com>
 """
 
-__version__ = "1.0.0"
-
 import os
 import struct
 import logging
