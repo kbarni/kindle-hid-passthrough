@@ -27,19 +27,25 @@ BT HID Device  -->  /dev/stpbt  -->  Bumble (userspace BT stack)  -->  /dev/uhid
 
 Pre-built ARM binaries are available from [GitHub Releases](https://github.com/zampierilucas/kindle-hid-passthrough/releases).
 
-1. Download the release files:
-   - `kindle-hid-passthrough` - C wrapper (entry point)
-   - `kindle-hid-passthrough.bin` - Main binary
-   - `libsyscall_wrapper.so` - Syscall compatibility shim
+1. Download and extract the release tarball (replace `VERSION` with the release tag, e.g., `v2.2.0`):
+   ```bash
+   VERSION=v2.2.0
+   wget "https://github.com/zampierilucas/kindle-hid-passthrough/releases/download/${VERSION}/kindle-hid-passthrough-${VERSION}-armv7.tar.gz"
+   tar -xzf kindle-hid-passthrough-${VERSION}-armv7.tar.gz
+   ```
 
-2. Copy all files to Kindle:
+2. Copy files to Kindle:
    ```bash
    scp kindle-hid-passthrough kindle-hid-passthrough.bin libsyscall_wrapper.so kindle:/mnt/us/kindle_hid_passthrough/
    ```
 
-3. Configure your device in `/mnt/us/kindle_hid_passthrough/devices.conf`:
-   ```
-   AA:BB:CC:DD:EE:FF classic
+3. Pair your device and test:
+   ```bash
+   # Discover and pair (put your device in pairing mode first)
+   ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --pair --protocol classic"
+
+   # Test connection (run without --pair)
+   ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough"
    ```
 
 4. (Optional) Install the upstart config for autostart:
