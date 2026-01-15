@@ -27,7 +27,7 @@ def color(text: str, color_name: str) -> str:
     return bumble_color(text, color_name)
 
 
-class BLELogger:
+class HIDLogger:
     """Logger with automatic timestamps and delta tracking for >>> markers"""
 
     def __init__(self, name: str = 'ble_hid'):
@@ -148,4 +148,4 @@ def setup_daemon_logging(log_file: str):
 
 
 # Global logger instance
-log = BLELogger()
+log = HIDLogger()
