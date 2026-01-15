@@ -12,7 +12,7 @@ import os
 from typing import Optional
 from enum import Enum
 
-__all__ = ['config', 'Config', 'Protocol', 'create_host', 'create_scanner', 'create_unified_host',
+__all__ = ['config', 'Config', 'Protocol', 'create_host', 'create_scanner',
            'get_fallback_hid_descriptor']
 
 
@@ -182,17 +182,15 @@ class Config:
 def create_host(protocol: Protocol = None, transport_spec: str = None):
     """Factory function to create a HID host.
 
-    Now always returns UnifiedHIDHost which handles both protocols.
-
     Args:
-        protocol: Protocol hint (no longer used - unified handles both)
+        protocol: Protocol hint (not used - host handles both protocols)
         transport_spec: HCI transport specification (default: from config)
 
     Returns:
-        UnifiedHIDHost instance
+        HIDHost instance
     """
-    from unified_host import UnifiedHIDHost
-    return UnifiedHIDHost(transport_spec)
+    from host import HIDHost
+    return HIDHost(transport_spec)
 
 
 def create_scanner(transport_spec: str = None):
@@ -206,21 +204,6 @@ def create_scanner(transport_spec: str = None):
     """
     from unified_scanner import UnifiedScanner
     return UnifiedScanner(transport_spec)
-
-
-def create_unified_host(transport_spec: str = None):
-    """Factory function to create a unified BLE+Classic host.
-
-    Note: This is now equivalent to create_host() since we always
-    use UnifiedHIDHost. Kept for backwards compatibility.
-
-    Args:
-        transport_spec: HCI transport specification (default: from config)
-
-    Returns:
-        UnifiedHIDHost instance
-    """
-    return create_host(transport_spec=transport_spec)
 
 
 def get_configured_protocols() -> set:

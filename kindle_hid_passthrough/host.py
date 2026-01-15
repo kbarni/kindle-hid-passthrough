@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unified HID Host - Supports both BLE and Classic Bluetooth
+HID Host - Supports both BLE and Classic Bluetooth
 
 Handles mixed-protocol device configurations by running both
 BLE and Classic handlers on a single Bumble Device.
@@ -22,7 +22,7 @@ from bumble.hci import (
     OwnAddressType,
 )
 from bumble.transport import open_transport
-from bumble.hid import Host as HIDHost, Message, HID_CONTROL_PSM, HID_INTERRUPT_PSM
+from bumble.hid import Host as BumbleHIDHost, Message, HID_CONTROL_PSM, HID_INTERRUPT_PSM
 from bumble.core import BT_BR_EDR_TRANSPORT, BT_HUMAN_INTERFACE_DEVICE_SERVICE, InvalidStateError
 from bumble.sdp import Client as SDPClient
 from bumble.gatt import (
@@ -39,7 +39,7 @@ from logging_utils import log
 from pairing import create_pairing_config, create_keystore
 from device_cache import DeviceCache
 
-__all__ = ['UnifiedHIDHost']
+__all__ = ['HIDHost']
 
 # HID Report Types
 HID_REPORT_TYPE_INPUT = 1
@@ -53,8 +53,8 @@ class DeviceConfig:
     name: Optional[str] = None
 
 
-class UnifiedHIDHost:
-    """Unified HID Host supporting both BLE and Classic Bluetooth.
+class HIDHost:
+    """HID Host supporting both BLE and Classic Bluetooth.
 
     This host:
     1. Parses device configs and groups by protocol
@@ -66,7 +66,7 @@ class UnifiedHIDHost:
     5. Creates UHID device and forwards reports
     """
 
-    PROTOCOL_NAME = "Unified"
+    PROTOCOL_NAME = "HID"
 
     # Active connection timing
     ACTIVE_DELAY = 2.0
@@ -74,7 +74,7 @@ class UnifiedHIDHost:
     ACTIVE_CONNECT_TIMEOUT = 10  # In 0.5s increments
 
     def __init__(self, transport_spec: str = None):
-        """Initialize Unified HID Host.
+        """Initialize HID Host.
 
         Args:
             transport_spec: HCI transport (default: from config)
@@ -141,7 +141,7 @@ class UnifiedHIDHost:
         """Initialize the Bumble device with both protocols."""
         from __init__ import __version__
 
-        log.info(f"Unified HID Host v{__version__}")
+        log.info(f"HID Host v{__version__}")
         log.info("Opening transport...")
 
         try:
@@ -282,7 +282,7 @@ class UnifiedHIDHost:
             log.error("No devices configured")
             return
 
-        log.info(f"[Unified] Waiting for connection (Classic: {len(self.classic_devices)}, BLE: {len(self.ble_devices)})")
+        log.info(f"Waiting for connection (Classic: {len(self.classic_devices)}, BLE: {len(self.ble_devices)})")
 
         try:
             # Wait for first connection
@@ -667,9 +667,9 @@ class UnifiedHIDHost:
     async def _continue_classic_after_pairing(self):
         """Continue Classic connection after pairing."""
         # Create HID Host and register connection
-        self.hid_host = HIDHost(self.device)
-        self.hid_host.on(HIDHost.EVENT_INTERRUPT_DATA, self._on_classic_interrupt_data)
-        self.hid_host.on(HIDHost.EVENT_VIRTUAL_CABLE_UNPLUG, self._on_virtual_cable_unplug)
+        self.hid_host = BumbleHIDHost(self.device)
+        self.hid_host.on(BumbleHIDHost.EVENT_INTERRUPT_DATA, self._on_classic_interrupt_data)
+        self.hid_host.on(BumbleHIDHost.EVENT_VIRTUAL_CABLE_UNPLUG, self._on_virtual_cable_unplug)
         log.info(f"[Classic] HID Host created")
 
         self.hid_host.on_device_connection(self.connection)
@@ -739,9 +739,9 @@ class UnifiedHIDHost:
             self._classic_connection_listener = None
 
         # Create HID Host for L2CAP
-        self.hid_host = HIDHost(self.device)
-        self.hid_host.on(HIDHost.EVENT_INTERRUPT_DATA, self._on_classic_interrupt_data)
-        self.hid_host.on(HIDHost.EVENT_VIRTUAL_CABLE_UNPLUG, self._on_virtual_cable_unplug)
+        self.hid_host = BumbleHIDHost(self.device)
+        self.hid_host.on(BumbleHIDHost.EVENT_INTERRUPT_DATA, self._on_classic_interrupt_data)
+        self.hid_host.on(BumbleHIDHost.EVENT_VIRTUAL_CABLE_UNPLUG, self._on_virtual_cable_unplug)
         log.info(f"[Classic] HID Host ready (PSM 0x{HID_CONTROL_PSM:04X}, 0x{HID_INTERRUPT_PSM:04X})")
 
         # Enable Page Scan

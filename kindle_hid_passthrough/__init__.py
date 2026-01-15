@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unified HID Host - UHID Passthrough
+Kindle HID Passthrough - UHID Passthrough
 
 HID device support for Linux using Google Bumble.
 Supports both Bluetooth Low Energy (BLE) and Classic Bluetooth (BR/EDR).
@@ -17,7 +17,7 @@ Usage:
     python main.py --daemon
 
     # Programmatic use
-    from unified_host import UnifiedHIDHost
+    from host import HIDHost
     from config import create_host, Protocol
 
     host = create_host()
@@ -26,13 +26,13 @@ Usage:
 
 __version__ = "2.4.0"
 
-from unified_host import UnifiedHIDHost
+from host import HIDHost
 from config import config, Protocol, create_host
 from logging_utils import log
 from device_cache import DeviceCache
 
 __all__ = [
-    'UnifiedHIDHost',
+    'HIDHost',
     'Protocol',
     'create_host',
     'config',
