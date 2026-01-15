@@ -23,7 +23,7 @@ jobs:
         run: |
           docker build \
             --platform linux/arm/v7 \
-            -f Dockerfile.arm \
+            -f .github/Dockerfile.arm \
             -t kindle-hid-passthrough-builder \
             --load \
             .
@@ -38,7 +38,12 @@ jobs:
           docker rm "$CONTAINER_ID"
           chmod +x dist/kindle-hid-passthrough dist/kindle-hid-passthrough.bin
 
-      - name: Show binary info
+      - name: Add config files
+        run: |
+          cp kindle_hid_passthrough/hid-passthrough.upstart dist/
+          cp kindle_hid_passthrough/config.ini dist/
+
+      - name: Show contents
         run: |
           file dist/*
           ls -lh dist/

@@ -3,7 +3,7 @@
 
 src_dir := justfile_directory()
 remote_dir := "/mnt/us/kindle_hid_passthrough"
-init_script := "/etc/init.d/hid-passthrough"
+upstart_conf := "/etc/upstart/hid-passthrough.conf"
 log_file := "/var/log/hid_passthrough.log"
 python := "/mnt/us/python3.10-kindle/python3-wrapper.sh"
 
@@ -14,14 +14,13 @@ default:
 deploy:
     @echo "Deploying to Kindle..."
     @echo "Stopping daemon..."
-    -ssh kindle "{{init_script}} stop" 2>/dev/null || true
+    -ssh kindle "initctl stop hid-passthrough" 2>/dev/null || true
     @echo "Remounting filesystems as writable..."
     ssh kindle "/usr/sbin/mntroot rw && mount -o remount,rw /mnt/base-us"
     @echo "Copying files..."
     scp {{src_dir}}/kindle_hid_passthrough/*.py kindle:{{remote_dir}}/
     scp {{src_dir}}/kindle_hid_passthrough/config.ini kindle:{{remote_dir}}/
-    scp {{src_dir}}/kindle_hid_passthrough/hid-passthrough.init kindle:{{init_script}}
-    ssh kindle "chmod +x {{init_script}}"
+    scp {{src_dir}}/kindle_hid_passthrough/hid-passthrough-dev.upstart kindle:{{upstart_conf}}
     @echo "Clearing Python bytecode cache..."
     ssh kindle "rm -rf {{remote_dir}}/__pycache__"
     @echo "Creating cache directory..."
@@ -29,12 +28,12 @@ deploy:
     @echo "Deployment complete!"
     @echo ""
     @echo "Start daemon with: just start"
-    -ssh kindle "{{init_script}} start" 2>/dev/null || true
+    -ssh kindle "initctl start hid-passthrough" 2>/dev/null || true
     @echo "View logs with: just logs"
 
 # Check daemon status
 status:
-    ssh kindle "{{init_script}} status"
+    ssh kindle "initctl status hid-passthrough"
 
 # View daemon logs
 logs:
@@ -46,15 +45,15 @@ logs-recent:
 
 # Restart daemon
 restart:
-    ssh kindle "{{init_script}} restart"
+    ssh kindle "initctl restart hid-passthrough"
 
 # Stop daemon
 stop:
-    ssh kindle "{{init_script}} stop"
+    ssh kindle "initctl stop hid-passthrough"
 
 # Start daemon
 start:
-    ssh kindle "{{init_script}} start"
+    ssh kindle "initctl start hid-passthrough"
 
 # Clear cache
 clear-cache:
@@ -102,26 +101,9 @@ pair-ble:
 run:
     ssh kindle "{{python}} {{remote_dir}}/main.py"
 
-# Remount root filesystem as read-write
-[private]
-remount-rw:
-    @ssh kindle "mount -o remount,rw /"
-
-# Remount root filesystem as read-only
-[private]
-remount-ro:
-    @ssh kindle "mount -o remount,ro /"
-
-# Setup autostart via Upstart
-setup-autostart: remount-rw
-    @echo "Setting up autostart..."
-    scp {{src_dir}}/kindle_hid_passthrough/hid-passthrough.upstart kindle:/etc/upstart/hid-passthrough.conf
-    @just remount-ro
-    @echo "Autostart configured! Service will start on next boot."
-
-# Remove autostart
-remove-autostart: remount-rw
+# Remove autostart (removes upstart config)
+remove-autostart:
     @echo "Removing autostart..."
-    ssh kindle "rm -f /etc/upstart/hid-passthrough.conf"
-    @just remount-ro
+    ssh kindle "/usr/sbin/mntroot rw"
+    ssh kindle "rm -f {{upstart_conf}}"
     @echo "Autostart removed."

@@ -48,7 +48,6 @@ just show-cache   # Show cached device data
 ## File Locations on Kindle
 
 - Code: `/mnt/us/kindle_hid_passthrough/`
-- Init script: `/etc/init.d/hid-passthrough`
 - Upstart config: `/etc/upstart/hid-passthrough.conf`
 - Logs: `/var/log/hid_passthrough.log`
 - Device config: `/mnt/us/kindle_hid_passthrough/devices.conf`
@@ -56,13 +55,13 @@ just show-cache   # Show cached device data
 
 ## Autostart (Upstart)
 
-The Kindle uses Upstart for service management, not SysV init or `/etc/rc.local`.
+The Kindle uses Upstart for service management. Two upstart configs are available:
+
+- `hid-passthrough.upstart` - For binary releases (runs compiled binary)
+- `hid-passthrough-dev.upstart` - For development (runs Python script)
+
+The `just deploy` command installs the dev version. Binary releases include the production version.
 
 ```bash
-just setup-autostart   # Enable autostart on boot
-just remove-autostart  # Disable autostart
+just remove-autostart  # Disable autostart (removes upstart config)
 ```
-
-This installs `/etc/upstart/hid-passthrough.conf` which starts the service after filesystems are mounted.
-
-Note: `expect fork` is required in the config because the init script forks the daemon to background.

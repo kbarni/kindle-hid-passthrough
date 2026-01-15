@@ -1,5 +1,5 @@
 # HID Passthrough - Bluetooth HID host with UHID passthrough
-# For use with pre-built binary from releases
+# Requires WMT (Bluetooth hardware) to be ready
 start on started wmt
 stop on stopping filesystems
 
@@ -8,4 +8,4 @@ respawn limit 5 60
 
 env KINDLE_HID_BASE=/mnt/us/kindle_hid_passthrough
 
-exec /mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --daemon
+exec /mnt/us/python3.10-kindle/python3-wrapper.sh /mnt/us/kindle_hid_passthrough/daemon.py
