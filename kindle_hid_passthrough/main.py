@@ -161,38 +161,6 @@ async def run_mode(address: str, protocol: Protocol, use_unified: bool = False):
         await host.cleanup()
 
 
-async def daemon_mode(address: str, protocol: Protocol, use_unified: bool = False):
-    """Daemon mode - auto-reconnect on disconnection."""
-    if use_unified:
-        log.info(f"Daemon mode: unified host (BLE + Classic)")
-    else:
-        log.info(f"Daemon mode: {address} ({protocol.value})")
-
-    while True:
-        if use_unified:
-            host = create_unified_host()
-        else:
-            host = create_host(protocol)
-
-        try:
-            log.info("=== Starting connection ===")
-            await host.run(address)
-        except KeyboardInterrupt:
-            log.warning("\nDaemon interrupted")
-            await host.cleanup()
-            break
-        except Exception as e:
-            log.error(f"Connection error: {e}")
-        finally:
-            try:
-                await host.cleanup()
-            except Exception:
-                pass
-
-        log.info(f"Reconnecting in {config.reconnect_delay}s...")
-        await asyncio.sleep(config.reconnect_delay)
-
-
 def main():
     parser = argparse.ArgumentParser(
         description='Kindle HID Passthrough - Userspace Bluetooth HID host'
@@ -248,7 +216,9 @@ def main():
         log.info(f"Using {protocol.value.upper()} protocol")
 
     if args.daemon:
-        asyncio.run(daemon_mode(address, protocol, use_unified))
+        # Use daemon module for proper reconnect handling
+        from daemon import main as daemon_main
+        asyncio.run(daemon_main())
     else:
         asyncio.run(run_mode(address, protocol, use_unified))
 

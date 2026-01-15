@@ -42,7 +42,7 @@ from bumble.sdp import (
     SDP_PROTOCOL_DESCRIPTOR_LIST_ATTRIBUTE_ID,
 )
 
-from config import config
+from config import config, get_fallback_hid_descriptor
 from logging_utils import log
 from pairing import create_pairing_config, create_keystore
 from device_cache import DeviceCache
@@ -476,7 +476,7 @@ class ClassicHIDHost:
         # Create UHID device
         if not self.report_map:
             log.warning("No report descriptor - using fallback")
-            self.report_map = self._get_fallback_descriptor()
+            self.report_map = get_fallback_hid_descriptor()
 
         self._create_uhid_device()
 
@@ -808,7 +808,7 @@ class ClassicHIDHost:
         # Create UHID device
         if not self.report_map:
             log.warning("No report descriptor - using fallback")
-            self.report_map = self._get_fallback_descriptor()
+            self.report_map = get_fallback_hid_descriptor()
 
         self._create_uhid_device()
 
@@ -988,98 +988,6 @@ class ClassicHIDHost:
             log.success(f"UHID device created: {name}")
         except Exception as e:
             log.error(f"Failed to create UHID device: {e}")
-
-    def _get_fallback_descriptor(self) -> bytes:
-        """Return a generic fallback HID report descriptor.
-
-        Based on Xbox-style controller report format (15 bytes after report ID):
-        01 00 80 00 80 00 80 00 80 00 00 00 00 00 00 00
-           [1-2] [3-4] [5-6] [7-8] [9-10][11-12][13][14-15]
-            LX    LY    RX    RY    LT    RT   Dpad Buttons
-
-        Axes: 16-bit little-endian, centered at 0x8000 (32768)
-        Triggers: 16-bit LE, 0-1023 (10-bit value)
-        D-pad (byte 13): Hat switch encoded value
-          1=Up, 3=Right, 5=Down, 7=Left (odd=cardinal, even=diagonal)
-        Buttons (bytes 14-15, LE 16-bit):
-          bit 0: A, bit 1: B, bit 2: X, bit 3: Y
-          bit 4: LB, bit 5: RB, bit 6: Select, bit 7: Start
-
-        Report ID 4 (1 byte): Battery level
-        """
-        return bytes([
-            0x05, 0x01,        # Usage Page (Generic Desktop)
-            0x09, 0x05,        # Usage (Gamepad)
-            0xa1, 0x01,        # Collection (Application)
-
-            # Report ID 1: Main gamepad report (15 bytes after report ID)
-            0x85, 0x01,        #   Report ID (1)
-
-            # Bytes 0-7: 4 axes (16-bit each = 8 bytes): LX, LY, RX, RY
-            # Centered at 0x8000, range 0x0000-0xFFFF
-            0x05, 0x01,        #   Usage Page (Generic Desktop)
-            0x09, 0x30,        #   Usage (X) - Left stick X
-            0x09, 0x31,        #   Usage (Y) - Left stick Y
-            0x09, 0x32,        #   Usage (Z) - Right stick X
-            0x09, 0x35,        #   Usage (Rz) - Right stick Y
-            0x16, 0x00, 0x00,  #   Logical Minimum (0)
-            0x26, 0xff, 0xff,  #   Logical Maximum (65535)
-            0x75, 0x10,        #   Report Size (16)
-            0x95, 0x04,        #   Report Count (4)
-            0x81, 0x02,        #   Input (Data, Variable, Absolute)
-
-            # Bytes 8-11: Triggers (16-bit each = 4 bytes): LT, RT
-            # 10-bit values (0-1023), stored as 16-bit LE
-            0x05, 0x02,        #   Usage Page (Simulation Controls)
-            0x09, 0xc5,        #   Usage (Brake) - LT
-            0x09, 0xc4,        #   Usage (Accelerator) - RT
-            0x16, 0x00, 0x00,  #   Logical Minimum (0)
-            0x26, 0xff, 0x03,  #   Logical Maximum (1023)
-            0x75, 0x10,        #   Report Size (16)
-            0x95, 0x02,        #   Report Count (2)
-            0x81, 0x02,        #   Input (Data, Variable, Absolute)
-
-            # Byte 12: D-pad as hat switch
-            # Controller uses 1=Up, 3=Right, 5=Down, 7=Left, 0=Neutral
-            # By setting Logical Min=1, Max=8, value 0 becomes null (centered)
-            # and values 1,3,5,7 map to positions 0,2,4,6 (Up,Right,Down,Left)
-            0x05, 0x01,        #   Usage Page (Generic Desktop)
-            0x09, 0x39,        #   Usage (Hat Switch)
-            0x15, 0x01,        #   Logical Minimum (1)
-            0x25, 0x08,        #   Logical Maximum (8)
-            0x35, 0x00,        #   Physical Minimum (0)
-            0x46, 0x3b, 0x01,  #   Physical Maximum (315)
-            0x65, 0x14,        #   Unit (Degrees)
-            0x75, 0x08,        #   Report Size (8)
-            0x95, 0x01,        #   Report Count (1)
-            0x81, 0x42,        #   Input (Data, Variable, Null State)
-
-            # Bytes 13-14: 16 buttons (2 bytes)
-            # A=1, B=2, X=3, Y=4, LB=5, RB=6, Select=7, Start=8
-            0x05, 0x09,        #   Usage Page (Button)
-            0x19, 0x01,        #   Usage Minimum (1)
-            0x29, 0x10,        #   Usage Maximum (16)
-            0x15, 0x00,        #   Logical Minimum (0)
-            0x25, 0x01,        #   Logical Maximum (1)
-            0x75, 0x01,        #   Report Size (1)
-            0x95, 0x10,        #   Report Count (16)
-            0x81, 0x02,        #   Input (Data, Variable, Absolute)
-
-            0xc0,              # End Collection
-
-            # Report ID 4: Battery (1 byte)
-            0x05, 0x06,        # Usage Page (Generic Device Controls)
-            0x09, 0x20,        # Usage (Battery Strength)
-            0xa1, 0x01,        # Collection (Application)
-            0x85, 0x04,        #   Report ID (4)
-            0x09, 0x20,        #   Usage (Battery Strength)
-            0x15, 0x00,        #   Logical Minimum (0)
-            0x26, 0xff, 0x00,  #   Logical Maximum (255)
-            0x75, 0x08,        #   Report Size (8)
-            0x95, 0x01,        #   Report Count (1)
-            0x81, 0x02,        #   Input (Data, Variable, Absolute)
-            0xc0,              # End Collection
-        ])
 
     async def clear_stale_key(self, address: str) -> bool:
         """Clear a stale link key from the keystore.

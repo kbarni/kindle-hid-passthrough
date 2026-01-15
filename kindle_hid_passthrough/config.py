@@ -12,7 +12,8 @@ import os
 from typing import Optional
 from enum import Enum
 
-__all__ = ['config', 'Config', 'Protocol', 'create_host', 'create_scanner', 'create_unified_host']
+__all__ = ['config', 'Config', 'Protocol', 'create_host', 'create_scanner', 'create_unified_host',
+           'get_fallback_hid_descriptor']
 
 
 class Protocol(Enum):
@@ -235,6 +236,70 @@ def get_configured_protocols() -> set:
     """
     devices = config.get_all_devices()
     return {d[1] for d in devices}
+
+
+def get_fallback_hid_descriptor() -> bytes:
+    """Return a generic fallback HID report descriptor.
+
+    Used when SDP query or GATT read fails to get the real descriptor.
+    Based on Xbox-style controller format with:
+    - 4 axes (16-bit): left stick X/Y, right stick X/Y
+    - 2 triggers (10-bit): LT, RT
+    - D-pad as hat switch
+    - 16 buttons
+    """
+    return bytes([
+        0x05, 0x01,        # Usage Page (Generic Desktop)
+        0x09, 0x05,        # Usage (Gamepad)
+        0xa1, 0x01,        # Collection (Application)
+        0x85, 0x01,        #   Report ID (1)
+
+        # 4 axes (16-bit each): LX, LY, RX, RY
+        0x05, 0x01,        #   Usage Page (Generic Desktop)
+        0x09, 0x30,        #   Usage (X) - Left stick X
+        0x09, 0x31,        #   Usage (Y) - Left stick Y
+        0x09, 0x32,        #   Usage (Z) - Right stick X
+        0x09, 0x35,        #   Usage (Rz) - Right stick Y
+        0x16, 0x00, 0x00,  #   Logical Minimum (0)
+        0x26, 0xff, 0xff,  #   Logical Maximum (65535)
+        0x75, 0x10,        #   Report Size (16)
+        0x95, 0x04,        #   Report Count (4)
+        0x81, 0x02,        #   Input (Data, Variable, Absolute)
+
+        # 2 triggers (10-bit): LT, RT
+        0x05, 0x02,        #   Usage Page (Simulation Controls)
+        0x09, 0xc5,        #   Usage (Brake) - LT
+        0x09, 0xc4,        #   Usage (Accelerator) - RT
+        0x16, 0x00, 0x00,  #   Logical Minimum (0)
+        0x26, 0xff, 0x03,  #   Logical Maximum (1023)
+        0x75, 0x10,        #   Report Size (16)
+        0x95, 0x02,        #   Report Count (2)
+        0x81, 0x02,        #   Input (Data, Variable, Absolute)
+
+        # D-pad as hat switch
+        0x05, 0x01,        #   Usage Page (Generic Desktop)
+        0x09, 0x39,        #   Usage (Hat Switch)
+        0x15, 0x01,        #   Logical Minimum (1)
+        0x25, 0x08,        #   Logical Maximum (8)
+        0x35, 0x00,        #   Physical Minimum (0)
+        0x46, 0x3b, 0x01,  #   Physical Maximum (315)
+        0x65, 0x14,        #   Unit (Degrees)
+        0x75, 0x08,        #   Report Size (8)
+        0x95, 0x01,        #   Report Count (1)
+        0x81, 0x42,        #   Input (Data, Variable, Null State)
+
+        # 16 buttons
+        0x05, 0x09,        #   Usage Page (Button)
+        0x19, 0x01,        #   Usage Minimum (1)
+        0x29, 0x10,        #   Usage Maximum (16)
+        0x15, 0x00,        #   Logical Minimum (0)
+        0x25, 0x01,        #   Logical Maximum (1)
+        0x75, 0x01,        #   Report Size (1)
+        0x95, 0x10,        #   Report Count (16)
+        0x81, 0x02,        #   Input (Data, Variable, Absolute)
+
+        0xc0,              # End Collection
+    ])
 
 
 # Global singleton instance

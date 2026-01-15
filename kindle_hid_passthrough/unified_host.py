@@ -34,7 +34,7 @@ from bumble.gatt import (
     GATT_REPORT_REFERENCE_DESCRIPTOR,
 )
 
-from config import config, Protocol
+from config import config, Protocol, get_fallback_hid_descriptor
 from logging_utils import log
 from pairing import create_pairing_config, create_keystore
 from device_cache import DeviceCache
@@ -479,7 +479,7 @@ class UnifiedHIDHost:
             await self._query_classic_sdp()
 
         if not self.report_map:
-            self.report_map = self._get_fallback_descriptor()
+            self.report_map = get_fallback_hid_descriptor()
             log.warning("[Classic] Using fallback descriptor")
 
         self._create_uhid_device()
@@ -818,23 +818,6 @@ class UnifiedHIDHost:
             log.success(f"UHID device created: {name}")
         except Exception as e:
             log.error(f"Failed to create UHID device: {e}")
-
-    def _get_fallback_descriptor(self) -> bytes:
-        """Return a generic fallback HID report descriptor."""
-        return bytes([
-            0x05, 0x01, 0x09, 0x05, 0xa1, 0x01,
-            0x85, 0x01,
-            0x05, 0x01, 0x09, 0x30, 0x09, 0x31, 0x09, 0x32, 0x09, 0x35,
-            0x16, 0x00, 0x00, 0x26, 0xff, 0xff, 0x75, 0x10, 0x95, 0x04, 0x81, 0x02,
-            0x05, 0x02, 0x09, 0xc5, 0x09, 0xc4,
-            0x16, 0x00, 0x00, 0x26, 0xff, 0x03, 0x75, 0x10, 0x95, 0x02, 0x81, 0x02,
-            0x05, 0x01, 0x09, 0x39,
-            0x15, 0x01, 0x25, 0x08, 0x35, 0x00, 0x46, 0x3b, 0x01, 0x65, 0x14,
-            0x75, 0x08, 0x95, 0x01, 0x81, 0x42,
-            0x05, 0x09, 0x19, 0x01, 0x29, 0x10,
-            0x15, 0x00, 0x25, 0x01, 0x75, 0x01, 0x95, 0x10, 0x81, 0x02,
-            0xc0,
-        ])
 
     async def cleanup(self):
         """Clean up resources."""
