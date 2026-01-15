@@ -44,7 +44,7 @@ Pre-built ARM binaries are available from [GitHub Releases](https://github.com/z
 3. Pair your device and test:
    ```bash
    # Discover and pair (put your device in pairing mode first)
-   ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --pair --protocol classic"
+   ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --pair"
 
    # Test connection (run without --pair)
    ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough"
@@ -60,11 +60,8 @@ Pre-built ARM binaries are available from [GitHub Releases](https://github.com/z
 ### Pairing a New Device
 
 ```bash
-# Interactive pairing (Classic Bluetooth)
-ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --pair --protocol classic"
-
-# Interactive pairing (BLE)
-ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --pair --protocol ble"
+# Interactive pairing (scans for both BLE and Classic devices)
+ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --pair"
 ```
 
 ### Running the Daemon
