@@ -17,7 +17,7 @@ import sys
 
 sys.path.insert(0, '/mnt/us/kindle_hid_passthrough')
 
-from config import config, __version__
+from config import __version__, config
 from host import HIDHost
 from logging_utils import setup_daemon_logging
 

@@ -9,8 +9,8 @@ userspace SMP.
 Author: Lucas Zampieri <lzampier@redhat.com>
 """
 
-from bumble.pairing import PairingConfig, PairingDelegate
 from bumble.keys import JsonKeyStore
+from bumble.pairing import PairingConfig, PairingDelegate
 
 from logging_utils import log
 

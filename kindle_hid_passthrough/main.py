@@ -17,17 +17,17 @@ Author: Lucas Zampieri <lzampier@redhat.com>
 
 import argparse
 import asyncio
-import sys
 import os
+import sys
 
 # Add current directory to path for imports
 sys.path.insert(0, '/mnt/us/kindle_hid_passthrough')
 
-from config import config, Protocol, normalize_addr
-from host import HIDHost
-from scanner import Scanner
+from config import Protocol, config, normalize_addr
 from daemon import main as daemon_main
+from host import HIDHost
 from logging_utils import log
+from scanner import Scanner
 
 
 async def pair_mode(protocol_filter: Protocol = None, sequential: bool = False):

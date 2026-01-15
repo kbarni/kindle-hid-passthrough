@@ -9,12 +9,11 @@ Author: Lucas Zampieri <lzampier@redhat.com>
 
 import configparser
 import os
-from typing import Optional, TYPE_CHECKING
 from enum import Enum
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from host import HIDHost
-    from scanner import Scanner
+    pass
 
 __version__ = "2.4.0"
 

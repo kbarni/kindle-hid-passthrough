@@ -10,16 +10,15 @@ Author: Lucas Zampieri <lzampier@redhat.com>
 
 import asyncio
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 
+from bumble.core import AdvertisingData, DeviceClass
 from bumble.device import Device
+from bumble.gatt import GATT_HUMAN_INTERFACE_DEVICE_SERVICE
 from bumble.hci import Address, HCI_Reset_Command
 from bumble.transport import open_transport
-from bumble.core import AdvertisingData, DeviceClass
 
-from bumble.gatt import GATT_HUMAN_INTERFACE_DEVICE_SERVICE
-
-from config import config, Protocol
+from config import Protocol, config
 from logging_utils import log
 
 __all__ = ['Scanner', 'DiscoveredDevice']
@@ -240,7 +239,10 @@ class Scanner:
                     try:
                         name_data = eir_data.get(0x09) or eir_data.get(0x08)
                         if name_data:
-                            name = name_data.decode('utf-8', errors='replace') if isinstance(name_data, bytes) else str(name_data)
+                            if isinstance(name_data, bytes):
+                                name = name_data.decode('utf-8', errors='replace')
+                            else:
+                                name = str(name_data)
                     except Exception:
                         pass
 

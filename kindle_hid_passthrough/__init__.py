@@ -23,10 +23,10 @@ Usage:
     await host.run(device_address)
 """
 
-from config import config, Protocol, __version__
+from config import Protocol, __version__, config
+from device_cache import DeviceCache
 from host import HIDHost
 from logging_utils import log
-from device_cache import DeviceCache
 
 __all__ = [
     'HIDHost',

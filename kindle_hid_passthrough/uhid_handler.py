@@ -8,11 +8,11 @@ Allows BLE/Classic HID devices to appear as native Linux input devices.
 Author: Lucas Zampieri <lzampier@redhat.com>
 """
 
+import logging
 import os
 import select
 import struct
-import logging
-from typing import Optional, Callable, List
+from typing import Callable, Optional
 
 __all__ = ['UHIDDevice', 'UHIDError', 'Bus']
 
@@ -172,7 +172,7 @@ class UHIDDevice:
             logger.info(f"Created UHID device: {self.name} "
                        f"(vendor=0x{self.vendor:04x}, product=0x{self.product:04x}, "
                        f"rd_size={len(self.report_descriptor)})")
-            
+
         except OSError as e:
             raise UHIDError(f"Failed to create device: {e}")
 

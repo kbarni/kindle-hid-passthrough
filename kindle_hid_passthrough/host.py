@@ -9,36 +9,37 @@ Author: Lucas Zampieri <lzampier@redhat.com>
 """
 
 import asyncio
-from typing import Optional, List, Tuple
 from dataclasses import dataclass
+from typing import List, Optional
 
+from bumble.core import BT_BR_EDR_TRANSPORT, BT_HUMAN_INTERFACE_DEVICE_SERVICE, InvalidStateError
 from bumble.device import Device, Peer
+from bumble.gatt import (
+    GATT_DEVICE_NAME_CHARACTERISTIC,
+    GATT_GENERIC_ACCESS_SERVICE,
+    GATT_HUMAN_INTERFACE_DEVICE_SERVICE,
+    GATT_REPORT_CHARACTERISTIC,
+    GATT_REPORT_MAP_CHARACTERISTIC,
+    GATT_REPORT_REFERENCE_DESCRIPTOR,
+)
 from bumble.hci import (
     Address,
     HCI_Reset_Command,
-    HCI_Write_Scan_Enable_Command,
     HCI_Write_Class_Of_Device_Command,
     HCI_Write_Local_Name_Command,
+    HCI_Write_Scan_Enable_Command,
     OwnAddressType,
 )
-from bumble.transport import open_transport
-from bumble.hid import Host as BumbleHIDHost, Message, HID_CONTROL_PSM, HID_INTERRUPT_PSM
-from bumble.core import BT_BR_EDR_TRANSPORT, BT_HUMAN_INTERFACE_DEVICE_SERVICE, InvalidStateError
+from bumble.hid import HID_CONTROL_PSM, HID_INTERRUPT_PSM
+from bumble.hid import Host as BumbleHIDHost
 from bumble.sdp import Client as SDPClient
-from bumble.gatt import (
-    GATT_GENERIC_ACCESS_SERVICE,
-    GATT_DEVICE_NAME_CHARACTERISTIC,
-    GATT_HUMAN_INTERFACE_DEVICE_SERVICE,
-    GATT_REPORT_MAP_CHARACTERISTIC,
-    GATT_REPORT_CHARACTERISTIC,
-    GATT_REPORT_REFERENCE_DESCRIPTOR,
-)
+from bumble.transport import open_transport
 
-from config import config, Protocol, get_fallback_hid_descriptor, normalize_addr, __version__
-from logging_utils import log
-from pairing import create_pairing_config, create_keystore
+from config import Protocol, __version__, config, get_fallback_hid_descriptor, normalize_addr
 from device_cache import DeviceCache
-from uhid_handler import UHIDDevice, Bus, UHIDError
+from logging_utils import log
+from pairing import create_keystore, create_pairing_config
+from uhid_handler import Bus, UHIDDevice, UHIDError
 
 __all__ = ['HIDHost']
 
@@ -393,7 +394,7 @@ class HIDHost:
                 # Handle the new connection
                 if self.connected_protocol == Protocol.CLASSIC:
                     await self._handle_classic_connection()
-                    log.success(f"\n[CLASSIC] Receiving HID reports. Press Ctrl+C to exit.")
+                    log.success("\n[CLASSIC] Receiving HID reports. Press Ctrl+C to exit.")
                     # Loop will continue to wait for next disconnection
                 else:
                     break  # Unexpected state
@@ -573,7 +574,7 @@ class HIDHost:
             if self.keystore:
                 keys = await self.keystore.get(address)
                 if keys and keys.link_key:
-                    log.success(f"[Classic] Link key verified")
+                    log.success("[Classic] Link key verified")
                 else:
                     log.warning("[Classic] Link key not found in keystore!")
 
@@ -662,7 +663,7 @@ class HIDHost:
         self.hid_host = BumbleHIDHost(self.device)
         self.hid_host.on(BumbleHIDHost.EVENT_INTERRUPT_DATA, self._on_classic_interrupt_data)
         self.hid_host.on(BumbleHIDHost.EVENT_VIRTUAL_CABLE_UNPLUG, self._on_virtual_cable_unplug)
-        log.info(f"[Classic] HID Host created")
+        log.info("[Classic] HID Host created")
 
         self.hid_host.on_device_connection(self.connection)
 
