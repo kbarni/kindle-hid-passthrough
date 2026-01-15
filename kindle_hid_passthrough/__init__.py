@@ -25,7 +25,7 @@ Usage:
     await host.run(device_address)
 """
 
-__version__ = "2.2.0"
+__version__ = "2.3.0"
 
 from host import BLEHIDHost
 from config import config, Protocol, create_host
