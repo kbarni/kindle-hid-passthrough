@@ -347,43 +347,47 @@ class ClassicHIDHost:
             except asyncio.TimeoutError:
                 log.warning("Link key event timeout (may already be saved)")
 
-            # Explicitly request encryption
-            log.info("Requesting encryption...")
-            try:
-                await asyncio.wait_for(
-                    self.connection.encrypt(enable=True),
-                    timeout=10.0
-                )
-                log.success("Encryption request sent")
-            except Exception as e:
-                log.warning(f"Encryption request: {e}")
+            # Check if already encrypted
+            if self.connection.is_encrypted:
+                log.success("Connection already encrypted!")
+            else:
+                # Set up event handlers BEFORE requesting encryption to avoid race
+                log.info("Requesting encryption...")
+                encryption_done = asyncio.Event()
 
-            # Wait for encryption to be enabled
-            log.info("Waiting for encryption...")
-            encryption_done = asyncio.Event()
+                def on_encryption_change():
+                    if self.connection.is_encrypted:
+                        log.success("Encryption enabled!")
+                        encryption_done.set()
 
-            def on_encryption_change():
-                if self.connection.is_encrypted:
-                    log.success("Encryption enabled!")
+                def on_encryption_failure(error):
+                    log.error(f"Encryption failed: {error}")
                     encryption_done.set()
 
-            def on_encryption_failure(error):
-                log.error(f"Encryption failed: {error}")
-                encryption_done.set()
+                self.connection.on('connection_encryption_change', on_encryption_change)
+                self.connection.on('connection_encryption_failure', on_encryption_failure)
 
-            self.connection.on('connection_encryption_change', on_encryption_change)
-            self.connection.on('connection_encryption_failure', on_encryption_failure)
+                try:
+                    await asyncio.wait_for(
+                        self.connection.encrypt(enable=True),
+                        timeout=10.0
+                    )
+                    log.success("Encryption request sent")
+                except Exception as e:
+                    log.warning(f"Encryption request: {e}")
 
-            try:
-                await asyncio.wait_for(encryption_done.wait(), timeout=10.0)
-            except asyncio.TimeoutError:
-                log.warning("Encryption event timeout")
+                # Wait for encryption to be enabled
+                log.info("Waiting for encryption...")
+                try:
+                    await asyncio.wait_for(encryption_done.wait(), timeout=10.0)
+                except asyncio.TimeoutError:
+                    log.warning("Encryption event timeout")
 
-            # Check final encryption state
-            if self.connection.is_encrypted:
-                log.success("Connection encrypted!")
-            else:
-                log.warning("Connection not encrypted")
+                # Check final encryption state
+                if self.connection.is_encrypted:
+                    log.success("Connection encrypted!")
+                else:
+                    log.warning("Connection not encrypted")
 
             # Query SDP for report descriptor and cache it
             await self._query_and_cache_descriptor(self.current_device_address)
@@ -400,11 +404,18 @@ class ClassicHIDHost:
                 else:
                     log.warning("Link key not found in keystore!")
 
+            # Clean up link key listeners
+            try:
+                self.connection.remove_listener('link_key', on_connection_link_key)
+                self.device.host.remove_listener('link_key', on_device_link_key)
+            except Exception:
+                pass
+
+            # Don't disconnect - stay connected for immediate use
             return True
         except Exception as e:
             log.error(f"Pairing failed: {e}")
-            return False
-        finally:
+            # Only disconnect on failure
             try:
                 self.connection.remove_listener('link_key', on_connection_link_key)
                 self.device.host.remove_listener('link_key', on_device_link_key)
@@ -416,6 +427,63 @@ class ClassicHIDHost:
                 except Exception:
                     pass
                 self.connection = None
+            return False
+
+    async def continue_after_pairing(self):
+        """Continue into run mode after successful pairing.
+
+        Uses the existing connection from pair_device() to establish
+        HID channels and start receiving reports.
+        """
+        if not self.connection:
+            raise InvalidStateError("No connection - call pair_device first")
+
+        self._disconnection_event = asyncio.Event()
+
+        # Set up disconnection handler
+        self.connection.on('disconnection', self._on_disconnection)
+
+        # Create HID Host and register connection
+        self.hid_host = HIDHost(self.device)
+        self.hid_host.on(HIDHost.EVENT_INTERRUPT_DATA, self._on_interrupt_data)
+        self.hid_host.on(HIDHost.EVENT_VIRTUAL_CABLE_UNPLUG, self._on_virtual_cable_unplug)
+        self.hid_host.on(HIDHost.EVENT_CONTROL_DATA, self._on_control_data)
+        self.hid_host.on(HIDHost.EVENT_HANDSHAKE, self._on_handshake)
+        log.info(f"HID Host created (Control PSM: 0x{HID_CONTROL_PSM:04X}, Interrupt PSM: 0x{HID_INTERRUPT_PSM:04X})")
+
+        # Register connection with HID host
+        self.hid_host.on_device_connection(self.connection)
+
+        # Actively connect to device's HID channels (we initiated, so we connect)
+        log.info("Connecting to HID control channel...")
+        try:
+            await asyncio.wait_for(self.hid_host.connect_control_channel(), timeout=5.0)
+            log.success("HID control channel connected")
+        except Exception as e:
+            log.warning(f"Control channel: {e}")
+
+        log.info("Connecting to HID interrupt channel...")
+        try:
+            await asyncio.wait_for(self.hid_host.connect_interrupt_channel(), timeout=5.0)
+            log.success("HID interrupt channel connected")
+        except Exception as e:
+            log.warning(f"Interrupt channel: {e}")
+
+        if not self.hid_host.l2cap_intr_channel:
+            log.error("Failed to connect HID interrupt channel")
+            return
+
+        # Create UHID device
+        if not self.report_map:
+            log.warning("No report descriptor - using fallback")
+            self.report_map = self._get_fallback_descriptor()
+
+        self._create_uhid_device()
+
+        log.success(f"\n[Classic] Paired and receiving HID reports. Press Ctrl+C to exit.")
+
+        # Wait for disconnection
+        await self._disconnection_event.wait()
 
     async def _query_and_cache_descriptor(self, address: str):
         """Query SDP for HID descriptor and cache it."""

@@ -91,7 +91,13 @@ async def pair_mode(protocol_filter: Protocol = None, sequential: bool = False):
         if success:
             log.success(f"Paired with {selected.name}")
             save_device_config(selected.address, selected.protocol, selected.name)
-            log.success("Saved to devices.conf. Run without --pair to connect.")
+
+            # Continue into run mode if host supports it
+            if hasattr(host, 'continue_after_pairing'):
+                log.info("Continuing with paired device...")
+                await host.continue_after_pairing()
+            else:
+                log.success("Saved to devices.conf. Run without --pair to connect.")
         else:
             log.error("Pairing failed")
 
