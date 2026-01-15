@@ -1,5 +1,5 @@
 # HID Passthrough - Bluetooth HID host with UHID passthrough
-# Requires WMT (Bluetooth hardware) to be ready
+# For development with Python environment
 start on started wmt
 stop on stopping filesystems
 
@@ -8,4 +8,17 @@ respawn limit 5 60
 
 env KINDLE_HID_BASE=/mnt/us/kindle_hid_passthrough
 
-exec /mnt/us/python3.10-kindle/python3-wrapper.sh /mnt/us/kindle_hid_passthrough/daemon.py
+script
+    # Load Bluetooth kernel module if not loaded
+    if ! lsmod | grep -q wmt_cdev_bt; then
+        /sbin/insmod /lib/modules/4.9.77-lab126/extra/wmt_cdev_bt.ko || true
+        sleep 1
+    fi
+
+    # Kill any conflicting processes
+    killall bluetoothd 2>/dev/null || true
+    killall vhci_stpbt_bridge 2>/dev/null || true
+    sleep 1
+
+    exec /mnt/us/python3.10-kindle/python3-wrapper.sh /mnt/us/kindle_hid_passthrough/daemon.py
+end script
