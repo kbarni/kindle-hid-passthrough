@@ -32,13 +32,14 @@ from bumble.hci import (
 )
 from bumble.hid import HID_CONTROL_PSM, HID_INTERRUPT_PSM
 from bumble.hid import Host as BumbleHIDHost
+from bumble.keys import JsonKeyStore
+from bumble.pairing import PairingConfig, PairingDelegate
 from bumble.sdp import Client as SDPClient
 from bumble.transport import open_transport
 
 from config import Protocol, __version__, config, get_fallback_hid_descriptor, normalize_addr
 from device_cache import DeviceCache
 from logging_utils import log
-from pairing import create_keystore, create_pairing_config
 from uhid_handler import Bus, UHIDDevice, UHIDError
 
 __all__ = ['HIDHost']
@@ -46,6 +47,49 @@ __all__ = ['HIDHost']
 # HID Report Types
 HID_REPORT_TYPE_INPUT = 1
 
+
+# ==================== PAIRING UTILITIES ====================
+
+class AutoAcceptPairingDelegate(PairingDelegate):
+    """Pairing delegate that auto-accepts all pairing requests."""
+
+    def __init__(self):
+        super().__init__(
+            io_capability=PairingDelegate.DISPLAY_OUTPUT_AND_YES_NO_INPUT
+        )
+
+    async def accept(self):
+        log.success("Pairing request received - accepting")
+        return True
+
+    async def compare_numbers(self, number, digits):
+        log.warning(f"Confirm number: {number:0{digits}}")
+        log.warning("Auto-accepting (press Ctrl+C to cancel)")
+        return True
+
+    async def get_number(self):
+        return 0
+
+    async def display_number(self, number, digits):
+        log.info(f"Display PIN: {number:0{digits}}")
+
+
+def create_pairing_config() -> PairingConfig:
+    """Create pairing configuration with secure defaults."""
+    return PairingConfig(
+        sc=True,       # Secure Connections
+        mitm=True,     # MITM protection
+        bonding=True,  # Enable bonding (save keys)
+        delegate=AutoAcceptPairingDelegate(),
+    )
+
+
+def create_keystore(path: str) -> JsonKeyStore:
+    """Create a JSON-based key store for bonding keys."""
+    return JsonKeyStore(namespace=None, filename=path)
+
+
+# ==================== DATA CLASSES ====================
 
 @dataclass
 class DeviceConfig:
