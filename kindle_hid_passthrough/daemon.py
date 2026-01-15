@@ -17,9 +17,9 @@ import sys
 
 sys.path.insert(0, '/mnt/us/kindle_hid_passthrough')
 
-from config import config, create_host
+from config import config, __version__
+from host import HIDHost
 from logging_utils import setup_daemon_logging
-from __init__ import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,7 @@ class HIDDaemon:
 
             try:
                 logger.info("=== Starting connection ===")
-                self.host = create_host()
+                self.host = HIDHost()
                 await self.host.run(self.device_address)
 
             except asyncio.CancelledError:
@@ -93,7 +93,7 @@ class HIDDaemon:
                 if auth_fail_addr:
                     logger.info(f"Auth failure detected for {auth_fail_addr}")
                     try:
-                        temp_host = create_host()
+                        temp_host = HIDHost()
                         if hasattr(temp_host, 'clear_stale_key'):
                             await temp_host.clear_stale_key(auth_fail_addr)
                     except Exception as e:

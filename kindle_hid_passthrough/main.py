@@ -23,7 +23,10 @@ import os
 # Add current directory to path for imports
 sys.path.insert(0, '/mnt/us/kindle_hid_passthrough')
 
-from config import config, Protocol, create_host, create_scanner
+from config import config, Protocol, normalize_addr
+from host import HIDHost
+from scanner import Scanner
+from daemon import main as daemon_main
 from logging_utils import log
 
 
@@ -40,7 +43,7 @@ async def pair_mode(protocol_filter: Protocol = None, sequential: bool = False):
     else:
         log.info(f"Pairing mode (scanning BLE + Classic {mode})")
 
-    scanner = create_scanner()
+    scanner = Scanner()
 
     try:
         await scanner.start()
@@ -82,7 +85,7 @@ async def pair_mode(protocol_filter: Protocol = None, sequential: bool = False):
     finally:
         await scanner.cleanup()
 
-    host = create_host()
+    host = HIDHost()
 
     try:
         success = await host.pair_device(selected.address, selected.protocol)
@@ -116,11 +119,11 @@ def save_device_config(address: str, protocol: Protocol, name: str = None):
     if dir_path:
         os.makedirs(dir_path, exist_ok=True)
 
-    addr_norm = address.split('/')[0].upper()
+    addr_norm = normalize_addr(address)
 
     existing_devices = config.get_all_devices()
     for existing_addr, _, _ in existing_devices:
-        if existing_addr.split('/')[0].upper() == addr_norm:
+        if existing_addr == addr_norm:
             log.info(f"Device {address} already in devices.conf")
             return
 
@@ -132,10 +135,10 @@ def save_device_config(address: str, protocol: Protocol, name: str = None):
 
         with open(conf_file, 'a') as f:
             if name:
-                f.write(f"{address} {protocol.value} {name}\n")
+                f.write(f"{addr_norm} {protocol.value} {name}\n")
             else:
-                f.write(f"{address} {protocol.value}\n")
-        log.info(f"Added: {address} {protocol.value} ({name or 'unnamed'})")
+                f.write(f"{addr_norm} {protocol.value}\n")
+        log.info(f"Added: {addr_norm} {protocol.value} ({name or 'unnamed'})")
     except Exception as e:
         log.error(f"Failed to save: {e}")
 
@@ -143,7 +146,7 @@ def save_device_config(address: str, protocol: Protocol, name: str = None):
 async def run_mode(address: str):
     """Normal run mode - connect and forward reports."""
     log.info(f"Connecting to {address}")
-    host = create_host()
+    host = HIDHost()
 
     try:
         await host.run(address)
@@ -207,7 +210,6 @@ def main():
 
     if args.daemon:
         # Use daemon module for proper reconnect handling
-        from daemon import main as daemon_main
         asyncio.run(daemon_main())
     else:
         asyncio.run(run_mode(address))

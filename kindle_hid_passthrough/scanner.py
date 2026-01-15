@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unified Bluetooth Scanner
+Bluetooth Scanner
 
 Scans for HID devices across both BLE and Classic protocols simultaneously.
 Uses a single Bumble Device instance to perform both scan types.
@@ -22,7 +22,7 @@ from bumble.gatt import GATT_HUMAN_INTERFACE_DEVICE_SERVICE
 from config import config, Protocol
 from logging_utils import log
 
-__all__ = ['UnifiedScanner', 'DiscoveredDevice']
+__all__ = ['Scanner', 'DiscoveredDevice']
 
 
 @dataclass
@@ -38,7 +38,7 @@ class DiscoveredDevice:
         return f"{proto_tag} {self.name} ({self.address}) RSSI: {self.rssi}"
 
 
-class UnifiedScanner:
+class Scanner:
     """Scans for HID devices across both BLE and Classic protocols.
 
     Uses a single Bumble Device instance to perform concurrent scanning.
@@ -57,7 +57,7 @@ class UnifiedScanner:
 
     async def start(self):
         """Initialize the Bumble device."""
-        log.info("Unified Scanner: Opening transport...")
+        log.info("Scanner: Opening transport...")
 
         try:
             self.transport = await asyncio.wait_for(

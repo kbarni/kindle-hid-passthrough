@@ -34,10 +34,11 @@ from bumble.gatt import (
     GATT_REPORT_REFERENCE_DESCRIPTOR,
 )
 
-from config import config, Protocol, get_fallback_hid_descriptor
+from config import config, Protocol, get_fallback_hid_descriptor, normalize_addr, __version__
 from logging_utils import log
 from pairing import create_pairing_config, create_keystore
 from device_cache import DeviceCache
+from uhid_handler import UHIDDevice, Bus, UHIDError
 
 __all__ = ['HIDHost']
 
@@ -106,15 +107,10 @@ class HIDHost:
 
         # UHID
         self.uhid_device = None
-        self._uhid_available = False
-        try:
-            from uhid_handler import UHIDDevice, Bus, UHIDError
-            self._UHIDDevice = UHIDDevice
-            self._Bus = Bus
-            self._UHIDError = UHIDError
-            self._uhid_available = True
-        except ImportError:
-            log.warning("UHID support not available")
+        self._uhid_available = True
+        self._UHIDDevice = UHIDDevice
+        self._Bus = Bus
+        self._UHIDError = UHIDError
 
         # Events
         self._disconnection_event = None
@@ -139,8 +135,6 @@ class HIDHost:
 
     async def start(self):
         """Initialize the Bumble device with both protocols."""
-        from __init__ import __version__
-
         log.info(f"HID Host v{__version__}")
         log.info("Opening transport...")
 
@@ -230,16 +224,16 @@ class HIDHost:
                 if keys:
                     for entry in keys:
                         addr = str(entry[0]) if isinstance(entry, (list, tuple)) else str(entry)
-                        self._keystore_addresses.add(addr.split('/')[0].upper())
+                        self._keystore_addresses.add(normalize_addr(addr))
                     log.info(f"Keystore has {len(self._keystore_addresses)} entries")
             except Exception as e:
                 log.warning(f"Failed to load keystore: {e}")
 
     def _format_device(self, addr: str) -> str:
         """Format device address with name if available."""
-        norm = addr.split('/')[0].upper()
+        norm = normalize_addr(addr)
         for dev in self.classic_devices + self.ble_devices:
-            if dev.address.split('/')[0].upper() == norm:
+            if dev.address == norm:
                 if dev.name:
                     return f"{dev.name} ({addr})"
         return addr
@@ -444,8 +438,6 @@ class HIDHost:
 
     async def _pair_ble(self, address: str) -> bool:
         """Pair with a BLE device."""
-        from bumble.hci import Address, OwnAddressType
-
         log.info(f"[BLE] Pairing with {address}...")
 
         target = Address(address)
@@ -702,8 +694,6 @@ class HIDHost:
     async def _continue_ble_after_pairing(self):
         """Continue BLE connection after pairing."""
         # Need to reconnect since we disconnected after pairing
-        from bumble.hci import Address, OwnAddressType
-
         log.info(f"[BLE] Reconnecting to {self.current_device_address}...")
         target = Address(self.current_device_address)
         self.connection = await asyncio.wait_for(
@@ -882,13 +872,13 @@ class HIDHost:
 
     def _is_classic_allowed(self, addr_str: str) -> bool:
         """Check if Classic address is allowed."""
-        norm_addr = addr_str.split('/')[0].upper()
+        norm_addr = normalize_addr(addr_str)
 
         # Check devices.conf
         for dev in self.classic_devices:
             if dev.address == '*':
                 return True
-            if dev.address.split('/')[0].upper() == norm_addr:
+            if dev.address == norm_addr:
                 return True
 
         # Check keystore
@@ -1077,7 +1067,7 @@ class HIDHost:
         target_addresses = set()
         for dev in self.ble_devices:
             if dev.address != '*':
-                target_addresses.add(dev.address.split('/')[0].upper())
+                target_addresses.add(dev.address)
 
         # Also include keystore addresses for BLE
         # (they might have been paired but not in devices.conf)
@@ -1091,7 +1081,7 @@ class HIDHost:
                 if self._connection_future.done():
                     return
 
-                addr = str(advertisement.address).split('/')[0].upper()
+                addr = normalize_addr(str(advertisement.address))
                 if addr in target_addresses:
                     found_device = advertisement
                     log.info(f"[BLE] Found target: {addr}")
@@ -1384,7 +1374,7 @@ class HIDHost:
             return False
 
         # Try multiple address formats
-        norm_addr = address.split('/')[0].upper()
+        norm_addr = normalize_addr(address)
         addresses_to_try = [
             norm_addr,                    # Just the MAC: 98:B9:EA:01:67:68
             f"{norm_addr}/P",             # With public suffix: 98:B9:EA:01:67:68/P

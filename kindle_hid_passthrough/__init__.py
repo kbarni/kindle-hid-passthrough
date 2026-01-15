@@ -18,23 +18,19 @@ Usage:
 
     # Programmatic use
     from host import HIDHost
-    from config import create_host, Protocol
 
-    host = create_host()
+    host = HIDHost()
     await host.run(device_address)
 """
 
-__version__ = "2.4.0"
-
+from config import config, Protocol, __version__
 from host import HIDHost
-from config import config, Protocol, create_host
 from logging_utils import log
 from device_cache import DeviceCache
 
 __all__ = [
     'HIDHost',
     'Protocol',
-    'create_host',
     'config',
     'log',
     'DeviceCache',

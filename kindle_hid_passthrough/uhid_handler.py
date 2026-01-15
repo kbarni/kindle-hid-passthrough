@@ -9,6 +9,7 @@ Author: Lucas Zampieri <lzampier@redhat.com>
 """
 
 import os
+import select
 import struct
 import logging
 from typing import Optional, Callable, List
@@ -238,7 +239,6 @@ class UHIDDevice:
         if self._fd is None:
             return False
 
-        import select
         readable, _, _ = select.select([self._fd], [], [], timeout)
 
         if not readable:

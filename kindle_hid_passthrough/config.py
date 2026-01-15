@@ -9,11 +9,21 @@ Author: Lucas Zampieri <lzampier@redhat.com>
 
 import configparser
 import os
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from enum import Enum
 
-__all__ = ['config', 'Config', 'Protocol', 'create_host', 'create_scanner',
-           'get_fallback_hid_descriptor']
+if TYPE_CHECKING:
+    from host import HIDHost
+    from scanner import Scanner
+
+__version__ = "2.4.0"
+
+__all__ = ['config', 'Config', 'Protocol', 'get_fallback_hid_descriptor', 'normalize_addr', '__version__']
+
+
+def normalize_addr(address: str) -> str:
+    """Normalize Bluetooth address - strip /P suffix, uppercase."""
+    return address.split('/')[0].upper()
 
 
 class Protocol(Enum):
@@ -136,27 +146,18 @@ class Config:
                 line = line.strip()
                 if line and not line.startswith('#'):
                     parts = line.split(None, 2)  # Split into max 3 parts
-                    address = parts[0]
+                    address = parts[0] if parts[0] == '*' else normalize_addr(parts[0])
                     protocol = self._parse_protocol(parts[1]) if len(parts) > 1 else self.protocol
                     name = parts[2] if len(parts) > 2 else None
                     devices.append((address, protocol, name))
 
         return devices
 
-    def _normalize_address(self, address: str) -> str:
-        """Normalize a Bluetooth address for comparison.
-
-        Strips transport suffix (/P for BR/EDR, etc.) and uppercases.
-        """
-        # Remove any transport suffix like /P or /LE
-        addr = address.split('/')[0]
-        return addr.upper()
-
     def is_device_allowed(self, address: str) -> tuple:
         """Check if a device address is in the allowed list.
 
         Args:
-            address: Device address to check
+            address: Device address to check (may have /P suffix from Bumble)
 
         Returns:
             Tuple of (allowed: bool, protocol: Protocol or None)
@@ -165,45 +166,15 @@ class Config:
         if not devices:
             return (False, None)
 
-        addr_norm = self._normalize_address(address)
+        addr_norm = normalize_addr(address)
 
         for dev_addr, protocol, _ in devices:
-            # Wildcard - accept any device
             if dev_addr == '*':
                 return (True, protocol)
-            # Exact match
-            dev_norm = self._normalize_address(dev_addr)
-            if addr_norm == dev_norm:
+            if addr_norm == dev_addr:
                 return (True, protocol)
 
         return (False, None)
-
-
-def create_host(protocol: Protocol = None, transport_spec: str = None):
-    """Factory function to create a HID host.
-
-    Args:
-        protocol: Protocol hint (not used - host handles both protocols)
-        transport_spec: HCI transport specification (default: from config)
-
-    Returns:
-        HIDHost instance
-    """
-    from host import HIDHost
-    return HIDHost(transport_spec)
-
-
-def create_scanner(transport_spec: str = None):
-    """Factory function to create a unified BLE+Classic scanner.
-
-    Args:
-        transport_spec: HCI transport specification (default: from config)
-
-    Returns:
-        UnifiedScanner instance
-    """
-    from unified_scanner import UnifiedScanner
-    return UnifiedScanner(transport_spec)
 
 
 def get_configured_protocols() -> set:
