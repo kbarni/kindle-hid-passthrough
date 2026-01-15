@@ -38,7 +38,6 @@ from config import config, Protocol
 from logging_utils import log
 from pairing import create_pairing_config, create_keystore
 from device_cache import DeviceCache
-from state_machine import StateMachine, HostState
 
 __all__ = ['UnifiedHIDHost']
 
@@ -90,9 +89,6 @@ class UnifiedHIDHost:
         self.hid_host = None  # For Classic
         self.connected_protocol = None
 
-        # State machine
-        self.state_machine = StateMachine()
-
         # Device state
         self.current_device_address = None
         self.device_name = None
@@ -125,11 +121,6 @@ class UnifiedHIDHost:
         self._connection_future = None
         self._last_report = None
 
-    @property
-    def state(self) -> HostState:
-        """Current host state."""
-        return self.state_machine.state
-
     def _parse_devices(self):
         """Parse devices from config and group by protocol."""
         devices = config.get_all_devices()
@@ -148,7 +139,6 @@ class UnifiedHIDHost:
     async def start(self):
         """Initialize the Bumble device with both protocols."""
         from __init__ import __version__
-        self.state_machine.transition(HostState.STARTING)
 
         log.info(f"Unified HID Host v{__version__}")
         log.info("Opening transport...")
@@ -159,7 +149,6 @@ class UnifiedHIDHost:
                 timeout=config.transport_timeout
             )
         except asyncio.TimeoutError:
-            self.state_machine.transition(HostState.ERROR, "Transport timeout")
             log.error(f"Transport open timed out after {config.transport_timeout}s")
             raise
 
@@ -190,7 +179,6 @@ class UnifiedHIDHost:
             log.success("HCI Reset successful")
             await asyncio.sleep(0.2)
         except asyncio.TimeoutError:
-            self.state_machine.transition(HostState.ERROR, "HCI reset timeout")
             log.error("HCI Reset timed out")
             raise
 
@@ -260,8 +248,6 @@ class UnifiedHIDHost:
                 if cache and 'report_map' in cache:
                     log.info(f"Cached descriptor for {self._format_device(dev.address)}")
 
-        self.state_machine.transition(HostState.CONNECTING)
-
         # Start protocol handlers
         tasks = []
 
@@ -288,7 +274,6 @@ class UnifiedHIDHost:
             await asyncio.wait_for(self._connection_future, timeout=60.0)
         except asyncio.TimeoutError:
             log.warning("Connection timeout - no device connected")
-            self.state_machine.transition(HostState.ERROR, "Connection timeout")
             raise InvalidStateError("No device connected within timeout")
         finally:
             # Cancel remaining tasks
@@ -306,13 +291,11 @@ class UnifiedHIDHost:
         else:
             await self._handle_ble_connection()
 
-        self.state_machine.transition(HostState.CONNECTED)
         proto_name = self.connected_protocol.value.upper()
         log.success(f"\n[{proto_name}] Receiving HID reports. Press Ctrl+C to exit.")
 
         # Wait for disconnection
         await self._disconnection_event.wait()
-        self.state_machine.transition(HostState.IDLE)
 
     # ==================== CLASSIC HANDLER ====================
 
@@ -694,8 +677,6 @@ class UnifiedHIDHost:
 
     async def _handle_ble_connection(self):
         """Finalize BLE connection setup."""
-        self.state_machine.transition(HostState.DISCOVERING_SERVICES)
-
         # Load cached descriptor
         cache = self.device_cache.load(self.current_device_address)
         if cache and 'report_map' in cache:
@@ -857,12 +838,6 @@ class UnifiedHIDHost:
 
     async def cleanup(self):
         """Clean up resources."""
-        if self.state_machine.state in (HostState.CONNECTED, HostState.AUTHENTICATING,
-                                        HostState.DISCOVERING_SERVICES):
-            self.state_machine.transition(HostState.DISCONNECTING)
-        elif self.state_machine.state not in (HostState.IDLE, HostState.DISCONNECTING):
-            self.state_machine.reset()
-
         if self.uhid_device:
             try:
                 self.uhid_device.destroy()
@@ -904,5 +879,3 @@ class UnifiedHIDHost:
 
         if self.transport:
             await self.transport.close()
-
-        self.state_machine.reset()
