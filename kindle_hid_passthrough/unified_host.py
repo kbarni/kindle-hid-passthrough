@@ -120,6 +120,7 @@ class UnifiedHIDHost:
         self._disconnection_event = None
         self._connection_future = None
         self._last_report = None
+        self._auth_failure_address = None  # Track address for auth failure retry
 
     def _parse_devices(self):
         """Parse devices from config and group by protocol."""
@@ -294,8 +295,84 @@ class UnifiedHIDHost:
         proto_name = self.connected_protocol.value.upper()
         log.success(f"\n[{proto_name}] Receiving HID reports. Press Ctrl+C to exit.")
 
-        # Wait for disconnection
-        await self._disconnection_event.wait()
+        # Wait for disconnection with retry on auth failure
+        max_auth_retries = 3
+        auth_retry_count = 0
+
+        while True:
+            await self._disconnection_event.wait()
+
+            # Check if this was an auth failure that we should retry
+            if self._auth_failure_address and auth_retry_count < max_auth_retries:
+                auth_retry_count += 1
+                failed_addr = self._auth_failure_address
+                self._auth_failure_address = None
+
+                log.info(f"[Classic] Auth failure retry {auth_retry_count}/{max_auth_retries}")
+
+                # Clear the stale key
+                await self.clear_stale_key(failed_addr)
+
+                # Clean up current connection state
+                if self.hid_host:
+                    self.hid_host = None
+                self.connection = None
+                self.connected_protocol = None
+                self.current_device_address = None
+
+                # Destroy UHID device if it was created
+                if self.uhid_device:
+                    try:
+                        self.uhid_device.destroy()
+                    except Exception:
+                        pass
+                    self.uhid_device = None
+
+                # Reset events for retry
+                self._disconnection_event.clear()
+                self._connection_future = asyncio.get_event_loop().create_future()
+
+                # Wait before retry
+                log.info("[Classic] Waiting 3s before retry...")
+                await asyncio.sleep(3.0)
+
+                # Re-start Classic handler only
+                log.info("[Classic] Restarting connection handler...")
+                classic_task = asyncio.create_task(
+                    self._run_classic_handler(),
+                    name="classic_handler_retry"
+                )
+
+                try:
+                    await asyncio.wait_for(self._connection_future, timeout=60.0)
+                except asyncio.TimeoutError:
+                    log.warning("[Classic] Retry connection timeout")
+                    classic_task.cancel()
+                    try:
+                        await classic_task
+                    except asyncio.CancelledError:
+                        pass
+                    break
+                finally:
+                    if not classic_task.done():
+                        classic_task.cancel()
+                        try:
+                            await classic_task
+                        except asyncio.CancelledError:
+                            pass
+
+                # Handle the new connection
+                if self.connected_protocol == Protocol.CLASSIC:
+                    await self._handle_classic_connection()
+                    log.success(f"\n[CLASSIC] Receiving HID reports. Press Ctrl+C to exit.")
+                    # Loop will continue to wait for next disconnection
+                else:
+                    break  # Unexpected state
+            else:
+                # Normal disconnection or max retries reached
+                if auth_retry_count >= max_auth_retries:
+                    log.error(f"[Classic] Max auth retries ({max_auth_retries}) reached, giving up")
+                break
 
     # ==================== CLASSIC HANDLER ====================
 
@@ -794,6 +871,12 @@ class UnifiedHIDHost:
         """Handle device disconnection."""
         proto = self.connected_protocol.value.upper() if self.connected_protocol else "?"
         log.warning(f"[{proto}] Device disconnected (reason={reason})")
+
+        # Reason 5 = HCI_AUTHENTICATION_FAILURE - likely stale link key
+        if reason == 5 and self.current_device_address and proto == "CLASSIC":
+            log.info("[Classic] Authentication failure - will clear stale key and retry")
+            self._auth_failure_address = self.current_device_address
+
         self._disconnection_event.set()
 
     def _create_uhid_device(self):
@@ -862,3 +945,28 @@ class UnifiedHIDHost:
 
         if self.transport:
             await self.transport.close()
+
+    async def clear_stale_key(self, address: str) -> bool:
+        """Clear a stale link key from the keystore.
+
+        Args:
+            address: Device address to clear key for
+
+        Returns:
+            True if key was cleared
+        """
+        if not self.keystore:
+            return False
+
+        try:
+            norm_addr = address.split('/')[0].upper()
+            keys = await self.keystore.get(norm_addr)
+            if keys and keys.link_key:
+                log.info(f"[Classic] Clearing stale link key for {address}")
+                await self.keystore.delete(norm_addr)
+                log.success(f"[Classic] Link key cleared for {address}")
+                return True
+            return False
+        except Exception as e:
+            log.warning(f"[Classic] Failed to clear link key: {e}")
+            return False
