@@ -23,7 +23,7 @@ import os
 # Add current directory to path for imports
 sys.path.insert(0, '/mnt/us/kindle_hid_passthrough')
 
-from config import config, Protocol, create_host, create_scanner, create_unified_host, get_configured_protocols
+from config import config, Protocol, create_host, create_scanner
 from logging_utils import log
 
 
@@ -82,11 +82,10 @@ async def pair_mode(protocol_filter: Protocol = None, sequential: bool = False):
     finally:
         await scanner.cleanup()
 
-    host = create_host(selected.protocol)
+    host = create_host()
 
     try:
-        await host.start()
-        success = await host.pair_device(selected.address)
+        success = await host.pair_device(selected.address, selected.protocol)
 
         if success:
             log.success(f"Paired with {selected.name}")
@@ -141,14 +140,10 @@ def save_device_config(address: str, protocol: Protocol, name: str = None):
         log.error(f"Failed to save: {e}")
 
 
-async def run_mode(address: str, protocol: Protocol, use_unified: bool = False):
+async def run_mode(address: str):
     """Normal run mode - connect and forward reports."""
-    if use_unified:
-        log.info(f"Connecting using unified host (BLE + Classic)")
-        host = create_unified_host()
-    else:
-        log.info(f"Connecting to {address} ({protocol.value})")
-        host = create_host(protocol)
+    log.info(f"Connecting to {address}")
+    host = create_host()
 
     try:
         await host.run(address)
@@ -189,38 +184,33 @@ def main():
         return
 
     address = args.address
-    protocol = protocol_override or config.protocol
-
-    # Check for mixed protocols
-    protocols = get_configured_protocols()
-    use_unified = len(protocols) > 1 and not protocol_override
-
-    if use_unified:
-        proto_names = ', '.join(p.value for p in protocols)
-        log.info(f"Mixed protocols detected ({proto_names}), using unified host")
 
     if not address:
-        device_config = config.get_device_config()
-        if device_config:
-            address, protocol, name = device_config
-            if protocol_override:
-                protocol = protocol_override
-            display = f"{name} ({address})" if name else address
-            log.info(f"Using device from {config.devices_config_file}: {display}")
+        all_devices = config.get_all_devices()
+        if all_devices:
+            # Show all configured devices
+            if len(all_devices) == 1:
+                addr, protocol, name = all_devices[0]
+                display = f"{name} ({addr})" if name else addr
+                log.info(f"Using device from {config.devices_config_file}: {display}")
+            else:
+                log.info(f"Using {len(all_devices)} devices from {config.devices_config_file}:")
+                for addr, protocol, name in all_devices:
+                    display = f"{name} ({addr})" if name else addr
+                    log.info(f"  - [{protocol.value}] {display}")
+            # Use first device's address for compatibility (unified host reads all from config)
+            address = all_devices[0][0]
         else:
             log.error("No device address specified. Use --address or create devices.conf")
             log.info("Run with --pair to set up a new device")
             sys.exit(1)
-
-    if not use_unified:
-        log.info(f"Using {protocol.value.upper()} protocol")
 
     if args.daemon:
         # Use daemon module for proper reconnect handling
         from daemon import main as daemon_main
         asyncio.run(daemon_main())
     else:
-        asyncio.run(run_mode(address, protocol, use_unified))
+        asyncio.run(run_mode(address))
 
 
 if __name__ == '__main__':

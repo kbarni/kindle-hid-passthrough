@@ -180,24 +180,19 @@ class Config:
 
 
 def create_host(protocol: Protocol = None, transport_spec: str = None):
-    """Factory function to create the appropriate HID host.
+    """Factory function to create a HID host.
+
+    Now always returns UnifiedHIDHost which handles both protocols.
 
     Args:
-        protocol: Protocol to use (default: from config)
+        protocol: Protocol hint (no longer used - unified handles both)
         transport_spec: HCI transport specification (default: from config)
 
     Returns:
-        BLEHIDHost or ClassicHIDHost instance
+        UnifiedHIDHost instance
     """
-    if protocol is None:
-        protocol = config.protocol
-
-    if protocol == Protocol.CLASSIC:
-        from classic_host import ClassicHIDHost
-        return ClassicHIDHost(transport_spec)
-    else:
-        from host import BLEHIDHost
-        return BLEHIDHost(transport_spec)
+    from unified_host import UnifiedHIDHost
+    return UnifiedHIDHost(transport_spec)
 
 
 def create_scanner(transport_spec: str = None):
@@ -216,7 +211,8 @@ def create_scanner(transport_spec: str = None):
 def create_unified_host(transport_spec: str = None):
     """Factory function to create a unified BLE+Classic host.
 
-    Use this when devices.conf contains devices of both protocols.
+    Note: This is now equivalent to create_host() since we always
+    use UnifiedHIDHost. Kept for backwards compatibility.
 
     Args:
         transport_spec: HCI transport specification (default: from config)
@@ -224,8 +220,7 @@ def create_unified_host(transport_spec: str = None):
     Returns:
         UnifiedHIDHost instance
     """
-    from unified_host import UnifiedHIDHost
-    return UnifiedHIDHost(transport_spec)
+    return create_host(transport_spec=transport_spec)
 
 
 def get_configured_protocols() -> set:

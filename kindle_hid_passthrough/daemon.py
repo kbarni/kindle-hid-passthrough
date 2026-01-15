@@ -17,7 +17,7 @@ import sys
 
 sys.path.insert(0, '/mnt/us/kindle_hid_passthrough')
 
-from config import config, create_host, create_unified_host, get_configured_protocols
+from config import config, create_host
 from logging_utils import setup_daemon_logging
 from __init__ import __version__
 
@@ -29,10 +29,8 @@ class HIDDaemon:
 
     def __init__(self):
         self.device_address = None
-        self.protocol = None
         self.running = False
         self.host = None
-        self.use_unified = False  # True if mixed protocols configured
 
     def load_device(self) -> bool:
         """Load device(s) from config file."""
@@ -41,20 +39,12 @@ class HIDDaemon:
             logger.error(f"No devices in {config.devices_config_file}")
             return False
 
-        # Use first device's protocol, but we'll accept any from the list
-        self.device_address, self.protocol, name = devices[0]
-
-        # Check if we have mixed protocols
-        protocols = get_configured_protocols()
-        self.use_unified = len(protocols) > 1
-
-        if self.use_unified:
-            proto_names = ', '.join(p.value for p in protocols)
-            logger.info(f"Mixed protocols detected ({proto_names}), using unified host")
+        # Use first device's address
+        self.device_address, protocol, name = devices[0]
 
         if len(devices) == 1 and self.device_address != '*':
             display = f"{name} ({self.device_address})" if name else self.device_address
-            logger.info(f"Device: {display} ({self.protocol.value})")
+            logger.info(f"Device: {display} ({protocol.value})")
         else:
             logger.info(f"Accepting {len(devices)} device(s):")
             for addr, proto, dev_name in devices:
@@ -77,11 +67,7 @@ class HIDDaemon:
 
             try:
                 logger.info("=== Starting connection ===")
-                if self.use_unified:
-                    self.host = create_unified_host()
-                else:
-                    self.host = create_host(self.protocol)
-
+                self.host = create_host()
                 await self.host.run(self.device_address)
 
             except asyncio.CancelledError:
@@ -107,11 +93,7 @@ class HIDDaemon:
                 if auth_fail_addr:
                     logger.info(f"Auth failure detected for {auth_fail_addr}")
                     try:
-                        # Create new host just for key cleanup
-                        if self.use_unified:
-                            temp_host = create_unified_host()
-                        else:
-                            temp_host = create_host(self.protocol)
+                        temp_host = create_host()
                         if hasattr(temp_host, 'clear_stale_key'):
                             await temp_host.clear_stale_key(auth_fail_addr)
                     except Exception as e:
