@@ -52,7 +52,11 @@ jobs:
 
       - name: Create tarball
         run: |
-          VERSION="${GITHUB_REF_NAME:-dev}"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF_NAME}"
+          else
+            VERSION="dev-$(git rev-parse --short HEAD)"
+          fi
           tar -czvf "kindle-hid-passthrough-${VERSION}-armv7.tar.gz" -C dist .
           ls -lh *.tar.gz
 
