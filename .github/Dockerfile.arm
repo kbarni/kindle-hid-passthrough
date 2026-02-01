@@ -2,20 +2,21 @@
 # Uses Nuitka with special ARM flags to handle branch range issues
 # Target: ARMv7 hard-float (armhf)
 
-# Use Alpine with musl libc - produces more portable static binaries
-FROM arm32v7/python:3.11-alpine
+# Use Debian-based image - Kindle uses glibc, not musl
+FROM arm32v7/python:3.11-slim-bookworm
 
 # Install build dependencies including Rust for some Python packages
-RUN apk add --no-cache \
-    build-base \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     patchelf \
     ccache \
     libffi-dev \
-    zlib-dev \
-    linux-headers \
-    openssl-dev \
-    rust \
-    cargo
+    zlib1g-dev \
+    linux-libc-dev \
+    libssl-dev \
+    rustc \
+    cargo \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Python build tools and dependencies
 RUN pip install --no-cache-dir \
