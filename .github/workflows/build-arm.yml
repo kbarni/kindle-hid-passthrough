@@ -10,6 +10,7 @@ on:
 
 jobs:
   build:
+    name: Build ARMv7
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: write
@@ -33,22 +34,31 @@ jobs:
       - name: Extract binaries
         run: |
           CONTAINER_ID=$(docker create kindle-hid-passthrough-builder)
-          mkdir -p dist
-          docker cp "$CONTAINER_ID:/build/kindle-hid-passthrough" ./dist/kindle-hid-passthrough
-          docker cp "$CONTAINER_ID:/build/kindle-hid-passthrough.bin" ./dist/kindle-hid-passthrough.bin
-          docker cp "$CONTAINER_ID:/build/libsyscall_wrapper.so" ./dist/libsyscall_wrapper.so
+          mkdir -p output/dist
+
+          # Extract C wrapper and syscall shim
+          docker cp "$CONTAINER_ID:/build/kindle-hid-passthrough" ./output/kindle-hid-passthrough
+          docker cp "$CONTAINER_ID:/build/libsyscall_wrapper.so" ./output/libsyscall_wrapper.so
+
+          # Extract entire Nuitka standalone dist directory (includes ld-linux + all .so deps)
+          docker cp "$CONTAINER_ID:/build/nuitka-out/main.dist/." ./output/dist/
+
           docker rm "$CONTAINER_ID"
-          chmod +x dist/kindle-hid-passthrough dist/kindle-hid-passthrough.bin
+          chmod +x output/kindle-hid-passthrough output/dist/main.bin output/dist/ld-linux-armhf.so.3
 
       - name: Add config files
         run: |
-          cp kindle_hid_passthrough/hid-passthrough.upstart dist/
-          cp kindle_hid_passthrough/config.ini dist/
+          cp kindle_hid_passthrough/hid-passthrough.upstart output/
+          cp kindle_hid_passthrough/config.ini output/
 
       - name: Show contents
         run: |
-          file dist/*
-          ls -lh dist/
+          echo "=== Top level ==="
+          ls -lh output/
+          echo "=== dist/ ==="
+          ls -lh output/dist/ | head -30
+          echo "=== File types ==="
+          file output/kindle-hid-passthrough output/dist/main.bin output/dist/ld-linux-armhf.so.3
 
       - name: Create tarball
         run: |
@@ -57,7 +67,7 @@ jobs:
           else
             VERSION="dev-$(git rev-parse --short HEAD)"
           fi
-          tar -czvf "kindle-hid-passthrough-${VERSION}-armv7.tar.gz" -C dist .
+          tar -czvf "kindle-hid-passthrough-${VERSION}-armv7.tar.gz" -C output .
           ls -lh *.tar.gz
 
       - name: Upload artifact
@@ -65,7 +75,7 @@ jobs:
         with:
           name: kindle-hid-passthrough-armv7
           path: |
-            dist/
+            output/
             *.tar.gz
 
       - name: Create Release
