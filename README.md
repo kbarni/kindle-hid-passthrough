@@ -29,30 +29,34 @@ BT HID Device  -->  /dev/stpbt  -->  Bumble (userspace BT stack)  -->  /dev/uhid
 
 Pre-built ARM binaries are available from [GitHub Releases](https://github.com/zampierilucas/kindle-hid-passthrough/releases).
 
-1. Download and extract the release tarball (replace `VERSION` with the release tag, e.g., `v2.2.0`):
+1. Download and extract:
    ```bash
-   VERSION=v2.2.0
+   VERSION=v2.7.0
    wget "https://github.com/zampierilucas/kindle-hid-passthrough/releases/download/${VERSION}/kindle-hid-passthrough-${VERSION}-armv7.tar.gz"
-   tar -xzf kindle-hid-passthrough-${VERSION}-armv7.tar.gz
+   tar -xzf kindle-hid-passthrough-${VERSION}-armv7.tar.gz -C /mnt/us/kindle_hid_passthrough/
    ```
 
-2. Copy files to Kindle:
+   The release contains a `dist/` directory with a bundled Python runtime and all dependencies — no Python installation required on the Kindle.
+
+2. Set up the Bluetooth transport (required before first run):
    ```bash
-   scp kindle-hid-passthrough kindle-hid-passthrough.bin libsyscall_wrapper.so kindle:/mnt/us/kindle_hid_passthrough/
+   # Load the BT kernel module
+   insmod /lib/modules/4.9.77-lab126/extra/wmt_cdev_bt.ko
+
+   # Kill Amazon's conflicting BT processes
+   killall bluetoothd vhci_stpbt_bridge
    ```
+   Without this, `/dev/stpbt` won't exist and the program will fail with `FileNotFoundError`.
 
 3. Pair your device and test:
    ```bash
-   # Discover and pair (put your device in pairing mode first)
-   ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --pair"
-
-   # Test connection (run without --pair)
-   ssh kindle "/mnt/us/kindle_hid_passthrough/kindle-hid-passthrough"
+   /mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --pair
+   /mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --daemon
    ```
 
-4. (Optional) Install the upstart config for autostart:
+4. (Optional) Install the upstart config for autostart (handles step 2 automatically):
    ```bash
-   scp hid-passthrough.conf kindle:/etc/upstart/
+   cp /mnt/us/kindle_hid_passthrough/hid-passthrough.upstart /etc/upstart/hid-passthrough.conf
    ```
 
 ## Usage
