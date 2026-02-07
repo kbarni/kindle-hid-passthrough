@@ -33,7 +33,7 @@ Pre-built ARM binaries are available from [GitHub Releases](https://github.com/z
    ```bash
    VERSION=v2.7.0
    wget "https://github.com/zampierilucas/kindle-hid-passthrough/releases/download/${VERSION}/kindle-hid-passthrough-${VERSION}-armv7.tar.gz"
-   tar -xzf kindle-hid-passthrough-${VERSION}-armv7.tar.gz -C /mnt/us/kindle_hid_passthrough/
+   tar -xzf kindle-hid-passthrough-${VERSION}-armv7.tar.gz
    ```
 
    The release contains a `dist/` directory with a bundled Python runtime and all dependencies — no Python installation required on the Kindle.
