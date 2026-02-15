@@ -1301,17 +1301,24 @@ class HIDHost:
         """Subscribe to BLE HID input report notifications."""
         for report_id, char in self.hid_reports.items():
             try:
-                await self.peer.subscribe(char, self._on_ble_hid_report)
+                # Use a closure to capture the report_id
+                def make_callback(rid):
+                    return lambda value: self._on_ble_hid_report(value, rid)
+
+                await self.peer.subscribe(char, make_callback(report_id))
                 log.success(f"[BLE] Subscribed to report {report_id}")
             except Exception as e:
                 log.warning(f"[BLE] Failed to subscribe to report {report_id}: {e}")
 
-    def _on_ble_hid_report(self, value):
+    def _on_ble_hid_report(self, value, report_id):
         """Handle BLE HID report."""
-        data = bytes(value)
+        # For BLE, GATT notifications do NOT include the Report ID.
+        # But if the device has multiple reports (which it does if we are here),
+        # UHID/Kernel expects the Report ID as the first byte of the data.
+        data = bytes([report_id]) + bytes(value)
 
         if data != self._last_report:
-            log.debug(f"[BLE] Report: {data.hex()}")
+            log.info(f"[BLE] Report (ID={report_id}): {data.hex()}")
             self._last_report = data
 
         if self.uhid_device:
