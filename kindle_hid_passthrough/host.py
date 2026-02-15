@@ -685,11 +685,20 @@ class HIDHost:
         Uses the existing connection from pair_device() to establish
         HID channels and start receiving reports.
         """
-        if not self.connection:
+        if not self.connected_protocol:
+            raise InvalidStateError("No paired device - call pair_device first")
+
+        # Classic requires an active connection from pair_device().
+        # BLE will reconnect in _continue_ble_after_pairing().
+        if self.connected_protocol == Protocol.CLASSIC and not self.connection:
             raise InvalidStateError("No connection - call pair_device first")
 
         self._disconnection_event = asyncio.Event()
-        self.connection.on('disconnection', self._on_disconnection)
+
+        # Only set listener if connection exists (Classic).
+        # BLE will set it after reconnecting in _continue_ble_after_pairing().
+        if self.connection:
+            self.connection.on('disconnection', self._on_disconnection)
 
         if self.connected_protocol == Protocol.CLASSIC:
             await self._continue_classic_after_pairing()
