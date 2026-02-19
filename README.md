@@ -7,7 +7,7 @@ A userspace Bluetooth HID host for Amazon Kindle e-readers. Connects Bluetooth H
 This project implements a complete Bluetooth stack in userspace using [Google Bumble](https://github.com/google/bumble), bypassing the Kindle's buggy kernel Bluetooth drivers. HID reports are forwarded to the Linux input subsystem via `/dev/uhid`, making devices appear as native input devices.
 
 ```
-BT HID Device  -->  /dev/stpbt  -->  Bumble (userspace BT stack)  -->  /dev/uhid  -->  Linux input (/dev/input/eventX)
+BT HID Device  -->  /dev/stpbt  -->  Bumble (userspace BT stack)  -->  /dev/uhid  -->  Linux input (/dev/input/eventX)  -->  Keypresses
 ```
 
 ## Features
@@ -15,14 +15,18 @@ BT HID Device  -->  /dev/stpbt  -->  Bumble (userspace BT stack)  -->  /dev/uhid
 - **Generic HID support** - Works with any Bluetooth HID device (Classic or BLE)
 - **Mixed protocol support** - Configure both BLE and Classic devices simultaneously
 - **UHID passthrough** - Devices appear as native Linux input devices
+- **UDEV keyboard device** - Devices can be treated as keyboard and keypresses used for text input.
 - **Auto-reconnection** - Daemon mode with automatic reconnection
 - **Hybrid connection** - Passive (device connects) + active (host connects) for Classic
 - **SDP descriptor query** - Fetches real HID report descriptors from devices
 - **Pairing support** - Interactive pairing with link key persistence
+- **Support for international layouts** - Country-specific layouts (azerty, qwertz) and other layouts (dvorak, bepo) are supported.
+
+As this project replaces the original Bluetooth stack, you can't use the default Bluetooth services (as listening to audiobooks) while service is active.
 
 ## Requirements
 
-- Root access on Kindle (via USBNetwork or similar)
+- SSH access on Kindle (via USBNetwork or similar)
 - Linux kernel with UHID support (`CONFIG_UHID`) - enabled by default on Kindle
 
 ## Deployment
@@ -31,8 +35,8 @@ Pre-built ARM binaries are available from [GitHub Releases](https://github.com/k
 
 1. Download and extract:
    ```bash
-   VERSION=v2.7.0
-   wget "https://github.com/zampierilucas/kindle-hid-passthrough/releases/download/${VERSION}/kindle-hid-passthrough-${VERSION}-armv7.tar.gz"
+   VERSION=v3.0.0
+   wget "https://github.com/kbarni/kindle-hid-passthrough/releases/download/${VERSION}/kindle-hid-passthrough-${VERSION}-armv7.tar.gz"
    tar -xzf kindle-hid-passthrough-${VERSION}-armv7.tar.gz
    ```
 
@@ -62,7 +66,7 @@ It allows to:
 
 - **Pair a new device**
 - **List paired devices**
-- **Install service** - these files are needed to configure the connected devices as keyboard.
+- **Install service** - these files are needed to configure the connected devices as keyboard. Don't need to use this if you use other input devices (page turners, game controllers)
 - **Install upstart daemon** - this will make *kindle-hid-passthrough* start automatically at system startup. Use this if you plan to often use the Kindle for writing. 
 - **Install KUAL menu** - adds a KUAL menu to start or stop the service.
 - **Set custom keyboard layout** - Adds KUAL menu to switch to a custom keyboard layout (French, German, Dvorak...)
@@ -85,6 +89,8 @@ cp 99-hid-keyboard.rules /etc/udev/rules.d
 udevadm control --reload-rules
 mntroot ro
 ```
+
+*Without these files, the keypresses will be captured (appear in `/dev/input/eventX`) but won't be translated to keystrokes. You can still use programs like [kindle-button-mapper-rs](https://github.com/zampierilucas/kindle-button-mapper-rs) to map the events to actions.*
 
 #### Install upstart service
 
@@ -140,6 +146,18 @@ ssh kindle "cat /mnt/us/kindle_hid_passthrough/devices.conf"
 ssh kindle "vi /mnt/us/kindle_hid_passthrough/devices.conf"
 ```
 
+#### Changing layout
+
+```bash
+# View configured devices
+ssh kindle "/mnt/us/kindle_hid_passthrough/setlayout.sh <layout>"
+
+# Get available layouts
+ssh kindle "ls /usr/share/X11/xkb/symbols"
+```
+
+where `<layout>` can be the country code (`fr`, `de`, `cz` etc.) or country+variant (`'fr(oss)'`,`'fr(bepo)'`)
+
 ## How It Works
 
 ### Why Userspace?
@@ -154,6 +172,7 @@ The Kindle's kernel Bluetooth stack has bugs that prevent proper HID pairing. By
 4. **HID Reports**: Received via L2CAP (Classic) or GATT notifications (BLE)
 5. **UHID**: Reports are forwarded to `/dev/uhid`, creating virtual input devices
 6. **Linux Input**: The kernel parses the HID descriptor and creates `/dev/input/eventX`
+7. **Udev**: Defines the input device as a keyboard and translates keypresses to keyboard input.
 
 ### Supported Protocols
 
@@ -162,9 +181,7 @@ The Kindle's kernel Bluetooth stack has bugs that prevent proper HID pairing. By
 | Classic Bluetooth (BR/EDR) | Working | Gamepads, keyboards |
 | BLE (Bluetooth Low Energy) | Working | Page turners, remotes |
 
-## Mapping Inputs to Actions
-
-This project creates standard Linux input devices (`/dev/input/eventX`) but does not handle mapping button presses to actions.
+## Mapping Inputs to Specific Actions
 
 On **Kindle**, the reading application ignores standard input devices, so you need a separate input mapper to trigger actions like page turns. Recommended: [kindle-button-mapper-rs](https://github.com/zampierilucas/kindle-button-mapper-rs) - A lightweight daemon that maps HID inputs to Kindle actions.
 
@@ -195,6 +212,10 @@ just keys        # Show pairing keys
 - [Bluetooth HID Profile Specification](https://www.bluetooth.com/specifications/specs/human-interface-device-profile-1-1-1/)
 - [BLE HID Service Specification](https://www.bluetooth.com/specifications/specs/hid-service-1-0/)
 
-## License
+## This software is distributed under the MIT License
 
-MIT
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
