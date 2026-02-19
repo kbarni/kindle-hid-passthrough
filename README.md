@@ -31,7 +31,7 @@ As this project replaces the original Bluetooth stack, you can't use the default
 
 ## Deployment
 
-Pre-built ARM binaries are available from [GitHub Releases](https://github.com/kbarni/kindle-hid-passthrough/releases).
+Pre-built ARM binaries are available from [GitHub Releases](https://github.com/kbarni/kindle-hid-passthrough/releases/latest/kindle_hid_passthrough.zip).
 
 1. Download and extract:
    ```bash
