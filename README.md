@@ -27,7 +27,7 @@ BT HID Device  -->  /dev/stpbt  -->  Bumble (userspace BT stack)  -->  /dev/uhid
 
 ## Deployment
 
-Pre-built ARM binaries are available from [GitHub Releases](https://github.com/zampierilucas/kindle-hid-passthrough/releases).
+Pre-built ARM binaries are available from [GitHub Releases](https://github.com/kbarni/kindle-hid-passthrough/releases).
 
 1. Download and extract:
    ```bash
@@ -39,6 +39,7 @@ Pre-built ARM binaries are available from [GitHub Releases](https://github.com/z
    The release contains a `dist/` directory with a bundled Python runtime and all dependencies — no Python installation required on the Kindle.
 
 2. Set up the Bluetooth transport (required before first run):
+
    ```bash
    # Load the BT kernel module
    insmod /lib/modules/4.9.77-lab126/extra/wmt_cdev_bt.ko
@@ -48,20 +49,54 @@ Pre-built ARM binaries are available from [GitHub Releases](https://github.com/z
    ```
    Without this, `/dev/stpbt` won't exist and the program will fail with `FileNotFoundError`.
 
-3. Pair your device and test:
-   ```bash
-   /mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --pair
-   /mnt/us/kindle_hid_passthrough/kindle-hid-passthrough --daemon
-   ```
-
-4. (Optional) Install the upstart config for autostart (handles step 2 automatically):
-   ```bash
-   cp /mnt/us/kindle_hid_passthrough/hid-passthrough.upstart /etc/upstart/hid-passthrough.conf
-   ```
 
 ## Usage
 
-### Pairing a New Device
+Run the provided installation script from ssh or kterm:
+
+```bash
+/mnt/us/kindle_hid_passthrough/install.sh
+```
+
+It allows to:
+
+- **Pair a new device**
+- **List paired devices**
+- **Install service** - these files are needed to configure the connected devices as keyboard.
+- **Install upstart daemon** - this will make *kindle-hid-passthrough* start automatically at system startup. Use this if you plan to often use the Kindle for writing. 
+- **Install KUAL menu** - adds a KUAL menu to start or stop the service.
+- **Set custom keyboard layout** - Adds KUAL menu to switch to a custom keyboard layout (French, German, Dvorak...)
+
+### Manual usage
+
+Here are the commands you can use to control manually *kindle-hid-passthrough*.
+
+#### Install the udev rules
+
+These files are necessary to tell the system that a connected input device is a keyboard.
+
+Run the following commands in a terminal (over ssh or kterm):
+
+```bash
+cd /mnt/us/kindle_hid_passthrough/assets
+mntroot rw
+cp dev_is_keyboard.sh /usr/local/bin/
+cp 99-hid-keyboard.rules /etc/udev/rules.d
+udevadm control --reload-rules
+mntroot ro
+```
+
+#### Install upstart service
+
+Run the following commands in a terminal (over ssh or kterm):
+
+```bash
+mntroot rw
+cp /mnt/us/kindle_hid_passthrough/hid-passthrough.upstart /etc/upstart/hid-passthrough.conf
+mntroot ro
+```
+
+#### Pairing a New Device
 
 ```bash
 # Interactive pairing (scans for both BLE and Classic devices)
@@ -80,9 +115,12 @@ ssh kindle "stop hid-passthrough"
 
 # View logs
 ssh kindle "tail -f /var/log/hid_passthrough.log"
+
+# Test events sent by the device
+
 ```
 
-### Device Configuration
+#### Device Configuration
 
 Paired devices are stored in `devices.conf`:
 

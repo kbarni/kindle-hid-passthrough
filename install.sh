@@ -56,11 +56,12 @@ print_menu()
 {
   printf "\nSelect an option:\n"
   printf " 1) Pair Bluetooth keyboard\n"
-  printf " 2) Install service\n"
-  printf " 3) Install upstart - installs a service running continuously\n"
-  printf " 4) Install KUAL menu\n"
-  printf " 5) Set custom keyboard layout\n"
-  printf " 6) Quit\n"
+  printf " 2) List paired devices\n"
+  printf " 3) Install service\n"
+  printf " 4) Install upstart - installs a service running continuously\n"
+  printf " 5) Install KUAL menu\n"
+  printf " 6) Set custom keyboard layout\n"
+  printf " 7) Quit\n"
 }
 
 while :; do
@@ -72,18 +73,21 @@ while :; do
       pairDevice
       ;;
     2)
-      installUpstart
+      listDevices
       ;;
     3)
-      installDaemon
+      installUpstart
       ;;
     4)
-      installKUAL
+      installDaemon
       ;;
     5)
-      setLayout
+      installKUAL
       ;;
     6)
+      setLayout
+      ;;
+    7)
       echo "Exiting."
       break
       ;;
