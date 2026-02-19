@@ -21,6 +21,11 @@ deploy:
     scp {{src_dir}}/kindle_hid_passthrough/*.py kindle:{{remote_dir}}/
     scp {{src_dir}}/kindle_hid_passthrough/config.ini kindle:{{remote_dir}}/
     scp {{src_dir}}/kindle_hid_passthrough/hid-passthrough-dev.upstart kindle:{{upstart_conf}}
+    @echo "Copying udev rules and helper script..."
+    scp {{src_dir}}/assets/99-hid-keyboard.rules kindle:/etc/udev/rules.d/
+    scp {{src_dir}}/assets/dev_is_keyboard.sh kindle:/usr/local/bin/
+    ssh kindle "chmod +x /usr/local/bin/dev_is_keyboard.sh"
+    ssh kindle "udevadm control --reload-rules"
     @echo "Clearing Python bytecode cache..."
     ssh kindle "rm -rf {{remote_dir}}/__pycache__"
     @echo "Creating cache directory..."

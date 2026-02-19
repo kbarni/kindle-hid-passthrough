@@ -46,9 +46,10 @@ jobs:
           docker rm "$CONTAINER_ID"
           chmod +x output/kindle-hid-passthrough output/dist/main.bin output/dist/ld-linux-armhf.so.3
 
-      - name: Add config files
+      - name: Add scripts and assets
         run: |
-          cp kindle_hid_passthrough/hid-passthrough.upstart output/
+          cp install.sh hid-passthrough-daemon.sh setlayout.sh output/
+          cp -r assets/ output/
           cp kindle_hid_passthrough/config.ini output/
 
       - name: Show contents
