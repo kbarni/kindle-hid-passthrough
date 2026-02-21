@@ -36,7 +36,7 @@ Pre-built ARM binaries are available from [GitHub Releases](https://github.com/k
 1. Download and extract:
    ```bash
    VERSION=v3.0.0
-   wget "https://github.com/kbarni/kindle-hid-passthrough/releases/download/${VERSION}/kindle-hid-passthrough-${VERSION}-armv7.tar.gz"
+   wget "https://github.com/zampierilucas/kindle-hid-passthrough/releases/download/${VERSION}/kindle-hid-passthrough-${VERSION}-armv7.tar.gz"
    tar -xzf kindle-hid-passthrough-${VERSION}-armv7.tar.gz
    ```
 
