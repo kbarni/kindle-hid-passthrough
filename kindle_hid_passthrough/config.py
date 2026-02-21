@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     pass
 
-__version__ = "2.7.0"
+__version__ = "3.0.0"
 
 __all__ = ['config', 'Config', 'Protocol', 'get_fallback_hid_descriptor', 'normalize_addr', '__version__']
 

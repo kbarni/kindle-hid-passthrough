@@ -2,7 +2,7 @@
 <extension>
 	<information>
 		<name>Kindle Bluetooth keyboard</name>
-		<version>1.0</version>
+		<version>3.0</version>
 		<author>LZampier and kbarni</author>
 		<id>kindle-hid-passthrough</id>
 	</information>

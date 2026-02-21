@@ -13,7 +13,7 @@ alert() {
 
     JSON='{ "clientParams":{ "alertId":"appAlert1", "show":true, "customStrings":[ { "matchStr":"alertTitle", "replaceStr":"'"$TITLE_ESC"'" }, { "matchStr":"alertText", "replaceStr":"'"$TEXT_ESC"'" } ] } }'
 
-    lipc-set-prop com.lab126.pillow pillowAlert "$JSON"
+    lipc-set-prop com.lab126.pillow pillowAlert "$JSON" 2>/dev/null || true
 }
 
 start() {

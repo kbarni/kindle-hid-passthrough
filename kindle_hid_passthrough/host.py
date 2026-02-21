@@ -1200,6 +1200,10 @@ class HIDHost:
 
     async def _ble_restore_or_pair(self):
         """Restore BLE bonding or initiate new pairing."""
+        if self.connection.is_encrypted:
+            log.info("[BLE] Connection already encrypted")
+            return
+
         if self.device.keystore:
             try:
                 keys = await self.device.keystore.get(str(self.connection.peer_address))

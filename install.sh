@@ -57,8 +57,8 @@ print_menu()
   printf "\nSelect an option:\n"
   printf " 1) Pair Bluetooth keyboard\n"
   printf " 2) List paired devices\n"
-  printf " 3) Install service\n"
-  printf " 4) Install upstart - installs a service running continuously\n"
+  printf " 3) Install upstart - installs a service running continuously\n"
+  printf " 4) Install keyboard service - maps keyboard events to keypresses\n"
   printf " 5) Install KUAL menu\n"
   printf " 6) Set custom keyboard layout\n"
   printf " 7) Quit\n"
@@ -76,10 +76,10 @@ while :; do
       listDevices
       ;;
     3)
-      installUpstart
+      installDaemon
       ;;
     4)
-      installDaemon
+      installUpstart
       ;;
     5)
       installKUAL

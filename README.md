@@ -123,7 +123,7 @@ ssh kindle "stop hid-passthrough"
 ssh kindle "tail -f /var/log/hid_passthrough.log"
 
 # Test events sent by the device
-
+ssh kindle "evtest /dev/input/event2"
 ```
 
 #### Device Configuration
