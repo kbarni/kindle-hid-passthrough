@@ -9,6 +9,7 @@ disconnect) from the HTTP server thread via asyncio.run_coroutine_threadsafe().
 import asyncio
 import logging
 import os
+import subprocess
 import threading
 
 from bt_setup import chip
@@ -49,6 +50,10 @@ class DaemonController:
         self._devices_mtime = 0
         self._devices_lock = threading.Lock()
 
+        # Mouse cursor overlay process
+        self._cursor_proc = None
+        self._cursor_lock = threading.Lock()
+
     def get_status(self) -> dict:
         """Thread-safe read of daemon state. Called from HTTP thread."""
         devices = self._get_devices_cached()
@@ -59,6 +64,7 @@ class DaemonController:
             "device_count": len(devices),
             "scanning": self.is_scanning,
             "pairing": self.is_pairing,
+            "cursor_running": self.cursor_running(),
         }
 
         conn = self.daemon.connection_state
@@ -259,6 +265,38 @@ class DaemonController:
     def request_clear_cache(self) -> int:
         """Clear all descriptor cache files. Returns count of files removed."""
         return DeviceCache(config.cache_dir).clear()
+
+    # ---- Mouse Cursor Overlay ----
+
+    def cursor_running(self) -> bool:
+        with self._cursor_lock:
+            return self._cursor_proc is not None and self._cursor_proc.poll() is None
+
+    def request_cursor_start(self):
+        """From HTTP thread: launch the mousecursor overlay binary."""
+        with self._cursor_lock:
+            if self._cursor_proc is not None and self._cursor_proc.poll() is None:
+                return
+            binary = os.path.join(config.base_path, 'scripts', 'mousecursor')
+            self._cursor_proc = subprocess.Popen(
+                [binary],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+    def request_cursor_stop(self):
+        """From HTTP thread: kill the mousecursor overlay binary."""
+        with self._cursor_lock:
+            if self._cursor_proc is None or self._cursor_proc.poll() is not None:
+                self._cursor_proc = None
+                return
+            self._cursor_proc.terminate()
+            try:
+                self._cursor_proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                self._cursor_proc.kill()
+                self._cursor_proc.wait()
+            self._cursor_proc = None
 
     # ---- Disconnect / Stop ----
 

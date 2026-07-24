@@ -23,6 +23,7 @@ state = {
     "daemon_running": True,
     "scanning": False,
     "pairing": False,
+    "cursor_running": False,
     "devices": [
         {"address": "98:B9:EA:01:67:68", "protocol": "classic", "name": "Xbox Wireless Controller"},
         {"address": "5C:2B:3E:50:4F:04", "protocol": "ble", "name": "BLE-M3"},
@@ -62,6 +63,7 @@ class MockHandler(SimpleHTTPRequestHandler):
                 "version": state["version"],
                 "scanning": state["scanning"],
                 "pairing": state["pairing"],
+                "cursor_running": state["cursor_running"],
             }
             if state["connected_device"]:
                 resp["connected_device"] = state["connected_device"]
@@ -151,6 +153,14 @@ class MockHandler(SimpleHTTPRequestHandler):
 
         elif self.path == "/clear-cache":
             self._json({"ok": True, "message": "Cache cleared"})
+
+        elif self.path == "/cursor-start":
+            state["cursor_running"] = True
+            self._json({"ok": True, "message": "Cursor overlay starting"})
+
+        elif self.path == "/cursor-stop":
+            state["cursor_running"] = False
+            self._json({"ok": True, "message": "Cursor overlay stopped"})
 
         else:
             self.directory = WAF_DIR

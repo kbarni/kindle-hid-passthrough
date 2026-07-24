@@ -27,6 +27,7 @@ var BTManager = (function() {
     var pairLogTimer = null;
     var btOn = false;
     var scanResultCount = 0;
+    var cursorBusy = false;
 
     // Currently viewed device in detail overlay
     var detailDevice = null;
@@ -161,6 +162,34 @@ var BTManager = (function() {
         }
     }
 
+    // ---- Mouse Cursor Overlay Toggle ----
+
+    function setCursorToggleUI(on) {
+        var toggle = getEl("btnCursorToggle");
+        if (!toggle) return;
+        toggle.className = on ? "toggle on" : "toggle";
+    }
+
+    function toggleCursor() {
+        if (cursorBusy) return;
+        cursorBusy = true;
+        var toggle = getEl("btnCursorToggle");
+        var isOn = toggle.className.indexOf(" on") !== -1;
+        var path = isOn ? "/cursor-stop" : "/cursor-start";
+        request(path, function(data, err) {
+            cursorBusy = false;
+            if (err) {
+                showMessage("Error: " + err, true);
+                return;
+            }
+            if (data && data.ok) {
+                setCursorToggleUI(!isOn);
+            } else {
+                showMessage(data && data.error ? data.error : "Failed", true);
+            }
+        });
+    }
+
     // ---- Status Polling ----
 
     function updateStatus() {
@@ -179,6 +208,8 @@ var BTManager = (function() {
             setToggleUI(running);
 
             renderDeviceLists(data.devices, data.connected_device || null);
+
+            if (!cursorBusy) setCursorToggleUI(!!data.cursor_running);
 
             getEl("hidWarning").style.display =
                 (data.connected_device && data.hid_ready === false) ? "block" : "none";
@@ -662,6 +693,7 @@ var BTManager = (function() {
 
     function bindEvents() {
         bindBtn("btnToggle", toggleBluetooth);
+        bindBtn("btnCursorToggle", toggleCursor);
         bindBtn("btnScan", toggleScan);
         bindBtn("footerDebug", showLogs);
         bindBtn("btnDetailClose", hideDeviceDetail);

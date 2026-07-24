@@ -90,6 +90,10 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self._handle_connect(param('addr'), param('protocol'))
             case '/disconnect':
                 self._handle_disconnect()
+            case '/cursor-start':
+                self._handle_cursor_start()
+            case '/cursor-stop':
+                self._handle_cursor_stop()
             case '/logs':
                 self._handle_logs(param('lines'))
             case _:
@@ -207,6 +211,18 @@ class RequestHandler(BaseHTTPRequestHandler):
         controller = self._controller
         controller.request_disconnect()
         self._send_json({"ok": True, "message": "Disconnecting"})
+
+    def _handle_cursor_start(self):
+        try:
+            self._controller.request_cursor_start()
+        except OSError as e:
+            self._send_json({"ok": False, "error": f"Failed to start cursor overlay: {e}"})
+            return
+        self._send_json({"ok": True, "message": "Cursor overlay starting"})
+
+    def _handle_cursor_stop(self):
+        self._controller.request_cursor_stop()
+        self._send_json({"ok": True, "message": "Cursor overlay stopped"})
 
     def _handle_logs(self, lines_str):
         log_file = config.log_file
