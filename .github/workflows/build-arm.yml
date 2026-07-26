@@ -68,34 +68,69 @@ jobs:
       - name: Extract binaries
         run: |
           CONTAINER_ID=$(docker create kindle-hid-passthrough-builder)
-          mkdir -p output/dist
+          mkdir -p output/kindle_hid_passthrough/dist
 
-          # Extract C wrapper and syscall shim
-          docker cp "$CONTAINER_ID:/build/kindle-hid-passthrough" ./output/kindle-hid-passthrough
-          docker cp "$CONTAINER_ID:/build/libsyscall_wrapper.so" ./output/libsyscall_wrapper.so
+          # Extract C wrapper and syscall shim into kindle_hid_passthrough/
+          docker cp "$CONTAINER_ID:/build/kindle-hid-passthrough" ./output/kindle_hid_passthrough/kindle-hid-passthrough
+          docker cp "$CONTAINER_ID:/build/libsyscall_wrapper.so" ./output/kindle_hid_passthrough/libsyscall_wrapper.so
 
           # Extract entire Nuitka standalone dist directory (includes ld-linux + all .so deps)
-          docker cp "$CONTAINER_ID:/build/nuitka-out/main.dist/." ./output/dist/
+          docker cp "$CONTAINER_ID:/build/nuitka-out/main.dist/." ./output/kindle_hid_passthrough/dist/
 
           docker rm "$CONTAINER_ID"
-          chmod +x output/kindle-hid-passthrough output/dist/main.bin output/dist/ld-linux-armhf.so.3
+          chmod +x output/kindle_hid_passthrough/kindle-hid-passthrough \
+                   output/kindle_hid_passthrough/dist/main.bin \
+                   output/kindle_hid_passthrough/dist/ld-linux-armhf.so.3
 
       - name: Add scripts and assets
         run: |
-          cp -r scripts/ output/
-          cp -r assets/ output/
-          cp -r illusion/ output/
-          cp -r koreader-plugin/ output/
-          cp kindle_hid_passthrough/config.ini output/
+          mkdir -p output/documents
+          mkdir -p output/koreader/plugins/hidpassthrough.koplugin
+          mkdir -p output/extensions/hid-passthrough
+          mkdir -p output/kindle_hid_passthrough/assets
+          mkdir -p output/kindle_hid_passthrough/cache
+          mkdir -p output/kindle_hid_passthrough/illusion
+          mkdir -p output/kindle_hid_passthrough/scripts
+
+          # documents/
+          cp illusion/BTManager.sh output/documents/
+
+          # koreader/plugins/
+          cp -r koreader-plugin/hidpassthrough.koplugin/. output/koreader/plugins/hidpassthrough.koplugin/
+
+          # extensions/hid-passthrough/
+          cp assets/config.xml output/extensions/hid-passthrough/
+          cp assets/menu.json output/extensions/hid-passthrough/
+
+          # kindle_hid_passthrough/assets/
+          cp assets/99-hid-keyboard.rules output/kindle_hid_passthrough/assets/
+          cp assets/hid-passthrough.upstart output/kindle_hid_passthrough/assets/
+          cp scripts/dev_is_keyboard.sh output/kindle_hid_passthrough/assets/
+
+          # kindle_hid_passthrough/ root
+          cp kindle_hid_passthrough/config.ini output/kindle_hid_passthrough/
+          cp scripts/install.sh output/kindle_hid_passthrough/
+
+          # kindle_hid_passthrough/illusion/
+          cp -r illusion/BTManager output/kindle_hid_passthrough/illusion/
+
+          # kindle_hid_passthrough/scripts/
+          cp scripts/dev_is_keyboard.sh output/kindle_hid_passthrough/scripts/
+          cp scripts/hid-passthrough-daemon.sh output/kindle_hid_passthrough/scripts/
+          cp scripts/setlayout.sh output/kindle_hid_passthrough/scripts/
 
       - name: Show contents
         run: |
           echo "=== Top level ==="
           ls -lh output/
-          echo "=== dist/ ==="
-          ls -lh output/dist/ | head -30
+          echo "=== kindle_hid_passthrough/ ==="
+          ls -lh output/kindle_hid_passthrough/
+          echo "=== kindle_hid_passthrough/dist/ ==="
+          ls -lh output/kindle_hid_passthrough/dist/ | head -30
           echo "=== File types ==="
-          file output/kindle-hid-passthrough output/dist/main.bin output/dist/ld-linux-armhf.so.3
+          file output/kindle_hid_passthrough/kindle-hid-passthrough \
+               output/kindle_hid_passthrough/dist/main.bin \
+               output/kindle_hid_passthrough/dist/ld-linux-armhf.so.3
 
       - name: Create tarball
         run: |
@@ -107,15 +142,19 @@ jobs:
           echo "Checking tarball contains all files expected by KindleForge install.sh..."
           MISSING=0
           for f in \
-            kindle-hid-passthrough \
-            assets/hid-passthrough.upstart \
-            assets/99-hid-keyboard.rules \
-            scripts/dev_is_keyboard.sh \
-            illusion/BTManager.sh \
-            koreader-plugin/hidpassthrough.koplugin/main.lua \
-            koreader-plugin/hidpassthrough.koplugin/_meta.lua \
-            config.ini \
-            dist/main.bin; do
+            kindle_hid_passthrough/kindle-hid-passthrough \
+            kindle_hid_passthrough/assets/hid-passthrough.upstart \
+            kindle_hid_passthrough/assets/99-hid-keyboard.rules \
+            kindle_hid_passthrough/scripts/dev_is_keyboard.sh \
+            kindle_hid_passthrough/illusion/BTManager/config.xml \
+            kindle_hid_passthrough/install.sh \
+            kindle_hid_passthrough/config.ini \
+            kindle_hid_passthrough/dist/main.bin \
+            documents/BTManager.sh \
+            koreader/plugins/hidpassthrough.koplugin/main.lua \
+            koreader/plugins/hidpassthrough.koplugin/_meta.lua \
+            extensions/hid-passthrough/config.xml \
+            extensions/hid-passthrough/menu.json; do
             if ! tar -tzf kindle-hid-passthrough-armv7.tar.gz "./$f" >/dev/null 2>&1; then
               echo "MISSING: $f"
               MISSING=1

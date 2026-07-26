@@ -10,35 +10,6 @@ in_install_dir()
     [ "$(pwd)" = "$INSTALL_DIR" ]
 }
 
-installMainFiles()
-{
-  echo " -> Installing main program files"
-  mkdir -p "$INSTALL_DIR/dist" "$INSTALL_DIR/illusion/BTManager" "$INSTALL_DIR/cache"
-  if ! in_install_dir; then
-    cp -r dist/* "$INSTALL_DIR/dist/"
-    cp kindle-hid-passthrough "$INSTALL_DIR/"
-    cp libsyscall_wrapper.so "$INSTALL_DIR/"
-    cp config.ini "$INSTALL_DIR/"
-  fi
-  chmod +x "$INSTALL_DIR/kindle-hid-passthrough"
-  echo " -> Ready."
-}
-
-installAll()
-{
-  echo ""
-  echo "=== Full Install ==="
-  installUdevRules
-  installUpstart
-  installMainFiles
-  installWAFApp
-  if [ -d /mnt/us/koreader/plugins/ ]; then
-    installKOReaderPlugin
-  fi
-  echo ""
-  echo "Installation complete. Open 'BT Manager' from the Kindle library."
-}
-
 installUdevRules()
 {
   echo " -> Installing udev rules"
@@ -66,33 +37,6 @@ pairDevice()
 listDevices()
 {
   cat devices.conf
-}
-
-installWAFApp()
-{
-  echo " -> Installing BTManager app"
-  if ! in_install_dir; then
-    mkdir -p "$INSTALL_DIR/illusion/BTManager"
-    cp -r illusion/BTManager/* "$INSTALL_DIR/illusion/BTManager/"
-    cp illusion/BTManager.sh "$INSTALL_DIR/illusion/BTManager.sh"
-    cp illusion/install-waf-app.sh "$INSTALL_DIR/illusion/install-waf-app.sh"
-  fi
-  if [ -f "$INSTALL_DIR/illusion/install-waf-app.sh" ]; then
-    /bin/sh "$INSTALL_DIR/illusion/install-waf-app.sh"
-  else
-    echo "ERROR: $INSTALL_DIR/illusion/install-waf-app.sh not found"
-  fi
-}
-
-installKOReaderPlugin()
-{
-  if [ ! -d /mnt/us/koreader/plugins/ ]; then
-    echo " -> KOReader not found, skipping plugin install"
-    return
-  fi
-  echo " -> Installing KOReader plugin"
-  cp -r koreader-plugin/hidpassthrough.koplugin /mnt/us/koreader/plugins/hidpassthrough.koplugin
-  echo " -> Ready."
 }
 
 uninstallAll()
@@ -153,26 +97,19 @@ EOF
 print_menu()
 {
   printf "\nSelect an option:\n"
-  printf " 1) Install everything (recommended)\n"
-  printf " 2) Pair Bluetooth keyboard\n"
-  printf " 3) List paired devices\n"
-  printf " 4) Install udev rules (keyboard service)\n"
-  printf " 5) Install upstart (auto-start on boot)\n"
-  printf " 6) Install BTManager app\n"
-  printf " 7) Install KOReader plugin\n"
-  printf " 8) Uninstall everything\n"
-  printf " 9) Quit\n"
+  printf " 1) Pair Bluetooth keyboard\n"
+  printf " 2) List paired devices\n"
+  printf " 3) Install udev rules (keyboard service)\n"
+  printf " 4) Install upstart (auto-start on boot)\n"
+  printf " 5) Uninstall everything\n"
+  printf " 6) Quit\n"
 }
 
 # Non-interactive entry point: `sh install.sh <action>` runs one action and exits.
 if [ $# -gt 0 ]; then
   case "$1" in
-    installAll)         installAll; exit 0 ;;
     installUdevRules)   installUdevRules; exit 0 ;;
     installUpstart)     installUpstart; exit 0 ;;
-    installMainFiles)   installMainFiles; exit 0 ;;
-    installWAFApp)      installWAFApp; exit 0 ;;
-    installKOReaderPlugin) installKOReaderPlugin; exit 0 ;;
     uninstallAll)       uninstallAll; exit 0 ;;
     *) echo "Unknown action: $1" >&2; exit 1 ;;
   esac
@@ -180,34 +117,25 @@ fi
 
 while :; do
   print_menu
-  printf "Enter choice [1-9]: "
+  printf "Enter choice [1-6]: "
   read choice
   case "$choice" in
     1)
-      installAll
-      ;;
-    2)
       pairDevice
       ;;
-    3)
+    2)
       listDevices
       ;;
-    4)
+    3)
       installUdevRules
       ;;
-    5)
+    4)
       installUpstart
       ;;
-    6)
-      installWAFApp
-      ;;
-    7)
-      installKOReaderPlugin
-      ;;
-    8)
+    5)
       uninstallAll
       ;;
-    9)
+    6)
       echo "Exiting."
       break
       ;;
