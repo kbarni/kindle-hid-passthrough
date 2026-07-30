@@ -1,0 +1,817 @@
+{
+  "af": {
+    "name": "Afghanistan",
+    "variants": {
+      "": "Standard",
+      "ps": "Pashto",
+      "uz": "Southern Uzbek",
+      "olpc-ps": "OLPC Pashto",
+      "olpc-fa": "OLPC Dari",
+      "olpc-uz": "OLPC Southern Uzbek"
+    }
+  },
+  "al": {
+    "name": "Albania",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "ad": {
+    "name": "Andorra",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "ara": {
+    "name": "Arabic",
+    "variants": {
+      "": "Standard",
+      "azerty": "azerty",
+      "azerty_digits": "azerty/digits",
+      "digits": "digits",
+      "qwerty": "qwerty",
+      "qwerty_digits": "qwerty/digits",
+      "buckwalter": "Buckwalter"
+    }
+  },
+  "am": {
+    "name": "Armenia",
+    "variants": {
+      "": "Standard",
+      "phonetic": "Phonetic",
+      "phonetic-alt": "Alternative Phonetic",
+      "eastern": "Eastern",
+      "western": "Western",
+      "eastern-alt": "Alternative Eastern"
+    }
+  },
+  "az": {
+    "name": "Azerbaijan",
+    "variants": {
+      "": "Standard",
+      "cyrillic": "Cyrillic"
+    }
+  },
+  "bd": {
+    "name": "Bangladesh",
+    "variants": {
+      "": "Standard",
+      "probhat": "Probhat"
+    }
+  },
+  "by": {
+    "name": "Belarus",
+    "variants": {
+      "": "Standard",
+      "winkeys": "Winkeys",
+      "latin": "Latin"
+    }
+  },
+  "be": {
+    "name": "Belgium",
+    "variants": {
+      "": "Standard",
+      "iso-alternate": "ISO Alternate",
+      "nodeadkeys": "Eliminate dead keys",
+      "sundeadkeys": "Sun dead keys",
+      "wang": "Wang model 724 azerty"
+    }
+  },
+  "bt": {
+    "name": "Bhutan",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "ba": {
+    "name": "Bosnia and Herzegovina",
+    "variants": {
+      "": "Standard",
+      "alternatequotes": "Use guillemets for quotes",
+      "unicode": "Use Bosnian digraphs",
+      "unicodeus": "US keyboard with Bosnian digraphs",
+      "us": "US keyboard with Bosnian letters"
+    }
+  },
+  "braille": {
+    "name": "Braille",
+    "variants": {
+      "": "Standard",
+      "left_hand": "Left hand",
+      "right_hand": "Right hand"
+    }
+  },
+  "br": {
+    "name": "Brazil",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys",
+      "dvorak": "Dvorak",
+      "nativo": "Nativo",
+      "nativo-us": "Nativo for USA keyboards",
+      "nativo-epo": "Nativo for Esperanto"
+    }
+  },
+  "bg": {
+    "name": "Bulgaria",
+    "variants": {
+      "": "Standard",
+      "phonetic": "Phonetic"
+    }
+  },
+  "kh": {
+    "name": "Cambodia",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "ca": {
+    "name": "Canada",
+    "variants": {
+      "": "Standard",
+      "fr-dvorak": "French Dvorak",
+      "fr-legacy": "French (legacy)",
+      "multix": "Multilingual",
+      "multi": "Multilingual, first part",
+      "multi-2gr": "Multilingual, second part",
+      "ike": "Inuktitut",
+      "shs": "Secwepemctsin",
+      "kut": "Ktunaxa"
+    }
+  },
+  "cn": {
+    "name": "China",
+    "variants": {
+      "": "Standard",
+      "tib": "Tibetan",
+      "tib_asciinum": "Tibetan (with ASCII numerals)"
+    }
+  },
+  "cd": {
+    "name": "Congo, Democratic Republic of the",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "hr": {
+    "name": "Croatia",
+    "variants": {
+      "": "Standard",
+      "alternatequotes": "Use guillemets for quotes",
+      "unicode": "Use Croatian digraphs",
+      "unicodeus": "US keyboard with Croatian digraphs",
+      "us": "US keyboard with Croatian letters"
+    }
+  },
+  "cz": {
+    "name": "Czechia",
+    "variants": {
+      "": "Standard",
+      "bksl": "With &lt;\\|&gt; key",
+      "qwerty": "qwerty",
+      "qwerty_bksl": "qwerty, extended Backslash",
+      "ucw": "UCW layout (accented letters only)"
+    }
+  },
+  "dk": {
+    "name": "Denmark",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys",
+      "mac": "Macintosh",
+      "mac_nodeadkeys": "Macintosh, eliminate dead keys",
+      "dvorak": "Dvorak"
+    }
+  },
+  "epo": {
+    "name": "Esperanto",
+    "variants": {
+      "": "Standard",
+      "legacy": "displaced semicolon and quote (obsolete)"
+    }
+  },
+  "ee": {
+    "name": "Estonia",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys",
+      "dvorak": "Dvorak",
+      "us": "US keyboard with Estonian letters"
+    }
+  },
+  "et": {
+    "name": "Ethiopia",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "fo": {
+    "name": "Faroe Islands",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys"
+    }
+  },
+  "fi": {
+    "name": "Finland",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys",
+      "smi": "Northern Saami",
+      "classic": "Classic",
+      "mac": "Macintosh"
+    }
+  },
+  "fr": {
+    "name": "France",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys",
+      "sundeadkeys": "Sun dead keys",
+      "oss": "Alternative",
+      "oss_latin9": "Alternative, latin-9 only",
+      "oss_nodeadkeys": "Alternative, eliminate dead keys",
+      "oss_sundeadkeys": "Alternative, Sun dead keys",
+      "latin9": "(Legacy) Alternative",
+      "latin9_nodeadkeys": "(Legacy) Alternative, eliminate dead keys",
+      "latin9_sundeadkeys": "(Legacy) Alternative, Sun dead keys",
+      "bepo": "Bepo, ergonomic, Dvorak way",
+      "bepo_latin9": "Bepo, ergonomic, Dvorak way, latin-9 only",
+      "dvorak": "Dvorak",
+      "mac": "Macintosh",
+      "geo": "Georgian AZERTY Tskapo"
+    }
+  },
+  "ge": {
+    "name": "Georgia",
+    "variants": {
+      "": "Standard",
+      "ergonomic": "Ergonomic",
+      "mess": "MESS",
+      "ru": "Russian",
+      "os": "Ossetian"
+    }
+  },
+  "de": {
+    "name": "Germany",
+    "variants": {
+      "": "Standard",
+      "deadacute": "Dead acute",
+      "deadgraveacute": "Dead grave acute",
+      "nodeadkeys": "Eliminate dead keys",
+      "ro": "Romanian keyboard with German letters",
+      "ro_nodeadkeys": "Romanian keyboard with German letters, eliminate dead keys",
+      "dvorak": "Dvorak",
+      "sundeadkeys": "Sun dead keys",
+      "neo": "Neostyle",
+      "mac": "Macintosh",
+      "mac_nodeadkeys": "Macintosh, eliminate dead keys"
+    }
+  },
+  "gh": {
+    "name": "Ghana",
+    "variants": {
+      "": "Standard",
+      "generic": "Multilingual",
+      "akan": "Akan",
+      "ewe": "Ewe",
+      "fula": "Fula",
+      "ga": "Ga",
+      "hausa": "Hausa"
+    }
+  },
+  "gr": {
+    "name": "Greece",
+    "variants": {
+      "": "Standard",
+      "simple": "Simple",
+      "extended": "Extended",
+      "nodeadkeys": "Eliminate dead keys",
+      "polytonic": "Polytonic"
+    }
+  },
+  "gn": {
+    "name": "Guinea",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "hu": {
+    "name": "Hungary",
+    "variants": {
+      "": "Standard",
+      "standard": "Standard",
+      "nodeadkeys": "Eliminate dead keys",
+      "qwerty": "qwerty",
+      "101_qwertz_comma_dead": "101/qwertz/comma/Dead keys",
+      "101_qwertz_comma_nodead": "101/qwertz/comma/Eliminate dead keys",
+      "101_qwertz_dot_dead": "101/qwertz/dot/Dead keys",
+      "101_qwertz_dot_nodead": "101/qwertz/dot/Eliminate dead keys",
+      "101_qwerty_comma_dead": "101/qwerty/comma/Dead keys",
+      "101_qwerty_comma_nodead": "101/qwerty/comma/Eliminate dead keys",
+      "101_qwerty_dot_dead": "101/qwerty/dot/Dead keys",
+      "101_qwerty_dot_nodead": "101/qwerty/dot/Eliminate dead keys",
+      "102_qwertz_comma_dead": "102/qwertz/comma/Dead keys",
+      "102_qwertz_comma_nodead": "102/qwertz/comma/Eliminate dead keys",
+      "102_qwertz_dot_dead": "102/qwertz/dot/Dead keys",
+      "102_qwertz_dot_nodead": "102/qwertz/dot/Eliminate dead keys",
+      "102_qwerty_comma_dead": "102/qwerty/comma/Dead keys",
+      "102_qwerty_comma_nodead": "102/qwerty/comma/Eliminate dead keys",
+      "102_qwerty_dot_dead": "102/qwerty/dot/Dead keys",
+      "102_qwerty_dot_nodead": "102/qwerty/dot/Eliminate dead keys"
+    }
+  },
+  "is": {
+    "name": "Iceland",
+    "variants": {
+      "": "Standard",
+      "Sundeadkeys": "Sun dead keys",
+      "nodeadkeys": "Eliminate dead keys",
+      "mac": "Macintosh",
+      "dvorak": "Dvorak"
+    }
+  },
+  "in": {
+    "name": "India",
+    "variants": {
+      "": "Standard",
+      "ben": "Bengali",
+      "ben_probhat": "Bengali Probhat",
+      "guj": "Gujarati",
+      "guru": "Gurmukhi",
+      "jhelum": "Gurmukhi Jhelum",
+      "kan": "Kannada",
+      "mal": "Malayalam",
+      "mal_lalitha": "Malayalam Lalitha",
+      "ori": "Oriya",
+      "tam_unicode": "Tamil Unicode",
+      "tam_TAB": "Tamil TAB Typewriter",
+      "tam_TSCII": "Tamil TSCII Typewriter",
+      "tam": "Tamil",
+      "tel": "Telugu",
+      "urd": "Urdu",
+      "bolnagri": "Hindi Bolnagri"
+    }
+  },
+  "ir": {
+    "name": "Iran",
+    "variants": {
+      "": "Standard",
+      "pro": "Pro",
+      "keypad": "Keypad",
+      "pro_keypad": "Pro Keypad",
+      "ku": "Kurdish, Latin Q",
+      "ku_f": "Kurdish, (F)",
+      "ku_alt": "Kurdish, Latin Alt-Q",
+      "ku_ara": "Kurdish, Arabic-Latin"
+    }
+  },
+  "iq": {
+    "name": "Iraq",
+    "variants": {
+      "": "Standard",
+      "ku": "Kurdish, Latin Q",
+      "ku_f": "Kurdish, (F)",
+      "ku_alt": "Kurdish, Latin Alt-Q",
+      "ku_ara": "Kurdish, Arabic-Latin"
+    }
+  },
+  "ie": {
+    "name": "Ireland",
+    "variants": {
+      "": "Standard",
+      "CloGaelach": "CloGaelach",
+      "UnicodeExpert": "UnicodeExpert",
+      "ogam": "Ogham",
+      "ogam_is434": "Ogham IS434"
+    }
+  },
+  "il": {
+    "name": "Israel",
+    "variants": {
+      "": "Standard",
+      "lyx": "lyx",
+      "phonetic": "Phonetic",
+      "biblical": "Biblical Hebrew (Tiro)"
+    }
+  },
+  "it": {
+    "name": "Italy",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys",
+      "mac": "Macintosh",
+      "geo": "Georgian"
+    }
+  },
+  "jp": {
+    "name": "Japan",
+    "variants": {
+      "": "Standard",
+      "kana": "Kana",
+      "OADG109A": "OADG 109A"
+    }
+  },
+  "nec_vndr/jp": {
+    "name": "Japan (PC-98xx Series)",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "kz": {
+    "name": "Kazakhstan",
+    "variants": {
+      "": "Standard",
+      "ruskaz": "Russian with Kazakh",
+      "kazrus": "Kazakh with Russian"
+    }
+  },
+  "kr": {
+    "name": "Korea, Republic of",
+    "variants": {
+      "": "Standard",
+      "kr104": "101/104 key Compatible"
+    }
+  },
+  "kg": {
+    "name": "Kyrgyzstan",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "la": {
+    "name": "Laos",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "latam": {
+    "name": "Latin American",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys",
+      "sundeadkeys": "Sun dead keys"
+    }
+  },
+  "lv": {
+    "name": "Latvia",
+    "variants": {
+      "": "Standard",
+      "apostrophe": "Apostrophe (') variant",
+      "tilde": "Tilde (~) variant",
+      "fkey": "F-letter (F) variant"
+    }
+  },
+  "lt": {
+    "name": "Lithuania",
+    "variants": {
+      "": "Standard",
+      "std": "Standard",
+      "us": "US keyboard with Lithuanian letters",
+      "ibm": "IBM (LST 1205-92)",
+      "lekp": "LEKP",
+      "lekpa": "LEKPa",
+      "balticplus": "Baltic+"
+    }
+  },
+  "mk": {
+    "name": "Macedonia",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys"
+    }
+  },
+  "mv": {
+    "name": "Maldives",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "mt": {
+    "name": "Malta",
+    "variants": {
+      "": "Standard",
+      "us": "Maltese keyboard with US layout"
+    }
+  },
+  "mao": {
+    "name": "Maori",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "mn": {
+    "name": "Mongolia",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "me": {
+    "name": "Montenegro",
+    "variants": {
+      "": "Standard",
+      "cyrillic": "Cyrillic",
+      "cyrillicyz": "Cyrillic, Z and ZHE swapped",
+      "latinunicode": "Latin unicode",
+      "latinyz": "Latin qwerty",
+      "latinunicodeyz": "Latin unicode qwerty",
+      "cyrillicalternatequotes": "Cyrillic with guillemets",
+      "latinalternatequotes": "Latin with guillemets"
+    }
+  },
+  "ma": {
+    "name": "Morocco",
+    "variants": {
+      "": "Standard",
+      "french": "French",
+      "tifinagh": "Tifinagh",
+      "tifinagh-alt": "Tifinagh Alternative",
+      "tifinagh-alt-phonetic": "Tifinagh Alternative Phonetic",
+      "tifinagh-extended": "Tifinagh Extended",
+      "tifinagh-phonetic": "Tifinagh Phonetic",
+      "tifinagh-extended-phonetic": "Tifinagh Extended Phonetic"
+    }
+  },
+  "mm": {
+    "name": "Myanmar",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "np": {
+    "name": "Nepal",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "nl": {
+    "name": "Netherlands",
+    "variants": {
+      "": "Standard",
+      "sundeadkeys": "Sun dead keys",
+      "mac": "Macintosh",
+      "std": "Standard"
+    }
+  },
+  "ng": {
+    "name": "Nigeria",
+    "variants": {
+      "": "Standard",
+      "igbo": "Igbo",
+      "yoruba": "Yoruba",
+      "hausa": "Hausa"
+    }
+  },
+  "no": {
+    "name": "Norway",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys",
+      "dvorak": "Dvorak",
+      "smi": "Northern Saami",
+      "smi_nodeadkeys": "Northern Saami, eliminate dead keys",
+      "mac": "Macintosh",
+      "mac_nodeadkeys": "Macintosh, eliminate dead keys"
+    }
+  },
+  "pk": {
+    "name": "Pakistan",
+    "variants": {
+      "": "Standard",
+      "ara": "Arabic"
+    }
+  },
+  "pl": {
+    "name": "Poland",
+    "variants": {
+      "": "Standard",
+      "qwertz": "qwertz",
+      "dvorak": "Dvorak",
+      "dvorak_quotes": "Dvorak, Polish quotes on quotemark key",
+      "dvorak_altquotes": "Dvorak, Polish quotes on key \"1/!\"",
+      "csb": "Kashubian",
+      "ru_phonetic_dvorak": "Russian phonetic Dvorak"
+    }
+  },
+  "pt": {
+    "name": "Portugal",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys",
+      "sundeadkeys": "Sun dead keys",
+      "mac": "Macintosh",
+      "mac_nodeadkeys": "Macintosh, eliminate dead keys",
+      "mac_sundeadkeys": "Macintosh, Sun dead keys",
+      "nativo": "Nativo",
+      "nativo-us": "Nativo for USA keyboards",
+      "nativo-epo": "Nativo for Esperanto"
+    }
+  },
+  "ro": {
+    "name": "Romania",
+    "variants": {
+      "": "Standard",
+      "cedilla": "Cedilla",
+      "std": "Standard",
+      "std_cedilla": "Standard (Cedilla)",
+      "winkeys": "Winkeys"
+    }
+  },
+  "ru": {
+    "name": "Russia",
+    "variants": {
+      "": "Standard",
+      "phonetic": "Phonetic",
+      "typewriter": "Typewriter",
+      "legacy": "Legacy",
+      "tt": "Tatar",
+      "os_legacy": "Ossetian, legacy",
+      "os_winkeys": "Ossetian, Winkeys",
+      "cv": "Chuvash",
+      "cv_latin": "Chuvash Latin",
+      "udm": "Udmurt",
+      "kom": "Komi",
+      "sah": "Yakut"
+    }
+  },
+  "rs": {
+    "name": "Serbia",
+    "variants": {
+      "": "Standard",
+      "yz": "Z and ZHE swapped",
+      "latin": "Latin",
+      "latinunicode": "Latin Unicode",
+      "latinyz": "Latin qwerty",
+      "latinunicodeyz": "Latin Unicode qwerty",
+      "alternatequotes": "With guillemets",
+      "latinalternatequotes": "Latin with guillemets"
+    }
+  },
+  "sk": {
+    "name": "Slovakia",
+    "variants": {
+      "": "Standard",
+      "bksl": "Extended Backslash",
+      "qwerty": "qwerty",
+      "qwerty_bksl": "qwerty, extended Backslash"
+    }
+  },
+  "si": {
+    "name": "Slovenia",
+    "variants": {
+      "": "Standard",
+      "alternatequotes": "Use guillemets for quotes",
+      "unicode": "Use Slovenian digraphs",
+      "unicodeus": "US keyboard with Slovenian digraphs",
+      "us": "US keyboard with Slovenian letters"
+    }
+  },
+  "za": {
+    "name": "South Africa",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "es": {
+    "name": "Spain",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys",
+      "sundeadkeys": "Sun dead keys",
+      "dvorak": "Dvorak",
+      "ast": "Asturian variant with bottom-dot H and bottom-dot L",
+      "cat": "Catalan variant with middle-dot L",
+      "mac": "Macintosh"
+    }
+  },
+  "lk": {
+    "name": "Sri Lanka",
+    "variants": {
+      "": "Standard",
+      "tam_unicode": "Tamil Unicode",
+      "tam_TAB": "Tamil TAB Typewriter"
+    }
+  },
+  "se": {
+    "name": "Sweden",
+    "variants": {
+      "": "Standard",
+      "nodeadkeys": "Eliminate dead keys",
+      "dvorak": "Dvorak",
+      "rus": "Russian phonetic",
+      "rus_nodeadkeys": "Russian phonetic, eliminate dead keys",
+      "smi": "Northern Saami",
+      "mac": "Macintosh",
+      "svdvorak": "Svdvorak"
+    }
+  },
+  "ch": {
+    "name": "Switzerland",
+    "variants": {
+      "": "Standard",
+      "de_nodeadkeys": "German, eliminate dead keys",
+      "de_sundeadkeys": "German, Sun dead keys",
+      "fr": "French",
+      "fr_nodeadkeys": "French, eliminate dead keys",
+      "fr_sundeadkeys": "French, Sun dead keys",
+      "fr_mac": "French (Macintosh)",
+      "de_mac": "German (Macintosh)"
+    }
+  },
+  "sy": {
+    "name": "Syria",
+    "variants": {
+      "": "Standard",
+      "syc": "Syriac",
+      "syc_phonetic": "Syriac phonetic",
+      "ku": "Kurdish, Latin Q",
+      "ku_f": "Kurdish, (F)",
+      "ku_alt": "Kurdish, Latin Alt-Q"
+    }
+  },
+  "tj": {
+    "name": "Tajikistan",
+    "variants": {
+      "": "Standard"
+    }
+  },
+  "th": {
+    "name": "Thailand",
+    "variants": {
+      "": "Standard",
+      "tis": "TIS-820.2538",
+      "pat": "Pattachote"
+    }
+  },
+  "tr": {
+    "name": "Turkey",
+    "variants": {
+      "": "Standard",
+      "f": "(F)",
+      "alt": "Alt-Q",
+      "sundeadkeys": "Sun dead keys",
+      "ku": "Kurdish, Latin Q",
+      "ku_f": "Kurdish, (F)",
+      "ku_alt": "Kurdish, Latin Alt-Q",
+      "intl": "International (with dead keys)"
+    }
+  },
+  "ua": {
+    "name": "Ukraine",
+    "variants": {
+      "": "Standard",
+      "phonetic": "Phonetic",
+      "typewriter": "Typewriter",
+      "winkeys": "Winkeys",
+      "unicode": "Unicode",
+      "rstu": "Standard RSTU",
+      "rstu_ru": "Standard RSTU on Russian layout",
+      "homophonic": "Homophonic"
+    }
+  },
+  "gb": {
+    "name": "United Kingdom",
+    "variants": {
+      "": "Standard",
+      "intl": "International (with dead keys)",
+      "dvorak": "Dvorak",
+      "dvorakukp": "Dvorak (UK Punctuation)",
+      "mac": "Macintosh",
+      "colemak": "Colemak"
+    }
+  },
+  "us": {
+    "name": "USA",
+    "variants": {
+      "": "Standard",
+      "chr": "Cherokee",
+      "euro": "With EuroSign on 5",
+      "intl": "International (with dead keys)",
+      "alt-intl": "Alternative international (former us_intl)",
+      "colemak": "Colemak",
+      "dvorak": "Dvorak",
+      "dvorak-intl": "Dvorak international",
+      "dvorak-l": "Left handed Dvorak",
+      "dvorak-r": "Right handed Dvorak",
+      "dvorak-classic": "Classic Dvorak",
+      "dvp": "Programmer Dvorak",
+      "rus": "Russian phonetic",
+      "mac": "Macintosh",
+      "altgr-intl": "International (AltGr dead keys)",
+      "olpc2": "Group toggle on multiply/divide key"
+    }
+  },
+  "uz": {
+    "name": "Uzbekistan",
+    "variants": {
+      "": "Standard",
+      "latin": "Latin"
+    }
+  },
+  "vn": {
+    "name": "Vietnam",
+    "variants": {
+      "": "Standard"
+    }
+  }
+}

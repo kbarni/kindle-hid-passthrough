@@ -646,6 +646,17 @@ var BTManager = (function() {
         });
     }
 
+    // ---- Layout Settings (overlay is a placeholder for now) ----
+
+    function showLayoutSettings() {
+        window.scrollTo(0, 0);
+        getEl("layoutOverlay").className = "layout-overlay visible";
+    }
+
+    function hideLayoutSettings() {
+        getEl("layoutOverlay").className = "layout-overlay";
+    }
+
     // ---- Confirm Dialog ----
 
     function showConfirm(message, action) {
@@ -686,6 +697,8 @@ var BTManager = (function() {
         bindBtn("btnDetailClose", hideDeviceDetail);
         bindBtn("btnDetailAction", detailAction);
         bindBtn("btnDetailRemove", detailRemove);
+        bindBtn("btnLayoutSettings", showLayoutSettings);
+        bindBtn("btnLayoutClose", hideLayoutSettings);
         bindBtn("btnPairClose", cancelPair);
         bindBtn("btnLogClose", hideLogs);
         bindBtn("btnLogUp", scrollLogsUp);

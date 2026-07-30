@@ -365,6 +365,64 @@ html {
     padding-top: 10px;
 }
 
+/* ---- Layout Row ---- */
+
+.layout-row {
+    padding: 16px 0;
+    border-bottom: 2px solid #000;
+    overflow: hidden;
+}
+
+.layout-label {
+    font-size: 32px;
+    float: left;
+    max-width: 78%;
+    line-height: 70px;
+}
+
+.icon-btn {
+    float: right;
+    min-width: 70px;
+    min-height: 70px;
+    padding: 8px;
+    border: 3px solid #000;
+    background: #fff;
+    cursor: pointer;
+    text-align: center;
+    -webkit-appearance: none;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+}
+
+.icon-btn:active,
+.icon-btn.btn-active {
+    background: #000;
+}
+
+.icon-img {
+    width: 48px;
+    height: 48px;
+    vertical-align: middle;
+}
+
+/* ---- Layout settings overlay (skeleton for now) ---- */
+
+.layout-overlay {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100%;
+    background: #fff;
+    z-index: 80;
+    padding: 8px 20px 20px 20px;
+}
+
+.layout-overlay.visible {
+    display: block;
+}
+
 /* ---- Footer ---- */
 
 .footer {
@@ -636,6 +694,9 @@ html {
     .detail-mono { font-size: 19px; }
     .off-message { font-size: 24px; padding-top: 44px; }
     .off-hint { font-size: 19px; }
+    .layout-label { font-size: 18px; line-height: 40px; }
+    .icon-btn { min-width: 40px; min-height: 40px; padding: 4px; }
+    .icon-img { width: 28px; height: 28px; }
     .footer { font-size: 15px; padding: 7px 12px 5px 12px; }
     .device-empty { font-size: 20px; }
     .message-bar { font-size: 20px; padding: 9px 12px; }
