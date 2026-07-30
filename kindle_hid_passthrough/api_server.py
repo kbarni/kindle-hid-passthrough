@@ -15,6 +15,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs, urlparse
 
+import xkb_layout
 from config import Protocol, config, get_version, normalize_addr
 
 __all__ = ['APIServer', 'RequestHandler', 'PORT']
@@ -92,6 +93,10 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self._handle_disconnect()
             case '/logs':
                 self._handle_logs(param('lines'))
+            case '/layout':
+                self._handle_layout_get()
+            case '/layout-apply':
+                self._handle_layout_apply(param('layout'), param('variant'), param('compose'))
             case _:
                 self._send_json({"ok": False, "error": "Not found"})
 
@@ -250,4 +255,28 @@ class RequestHandler(BaseHTTPRequestHandler):
             self._send_json({"ok": True, "lines": short})
         except OSError as e:
             self._send_json({"ok": False, "error": str(e)})
+
+    def _handle_layout_get(self):
+        settings = config.get_keyboard_settings()
+        self._send_json({"ok": True, **settings})
+
+    def _handle_layout_apply(self, layout, variant, compose_str):
+        if not layout:
+            self._send_json({"ok": False, "error": "No layout provided"})
+            return
+
+        variant = variant or ""
+        compose = compose_str in ('1', 'true', 'yes')
+
+        try:
+            xkb_layout.apply_layout(layout, variant, compose)
+        except ValueError as e:
+            self._send_json({"ok": False, "error": str(e)})
+            return
+        except Exception as e:
+            self._send_json({"ok": False, "error": f"Failed to apply layout: {e}"})
+            return
+
+        config.save_keyboard_settings(layout, variant, compose)
+        self._send_json({"ok": True, "message": "Layout applied"})
 

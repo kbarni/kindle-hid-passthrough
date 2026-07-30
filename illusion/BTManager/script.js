@@ -28,6 +28,11 @@ var BTManager = (function() {
     var btOn = false;
     var scanResultCount = 0;
 
+    // Keyboard layout state
+    var currentLayout = "us";
+    var currentVariant = "";
+    var composeOn = false;
+
     // Currently viewed device in detail overlay
     var detailDevice = null;
     var detailRenderKey = "";
@@ -124,6 +129,7 @@ var BTManager = (function() {
         }
         getEl("mainContent").style.display = on ? "block" : "none";
         getEl("offState").style.display = on ? "none" : "block";
+        getEl("layoutRow").style.display = on ? "block" : "none";
     }
 
     function toggleBluetooth() {
@@ -646,15 +652,97 @@ var BTManager = (function() {
         });
     }
 
-    // ---- Layout Settings (overlay is a placeholder for now) ----
+    // ---- Layout Settings ----
+
+    function populateLangSelect(selectedCode) {
+        var select = getEl("layoutLangSelect");
+        var html = "";
+        for (var code in BT_LAYOUTS) {
+            if (!BT_LAYOUTS.hasOwnProperty(code)) continue;
+            var sel = (code === selectedCode) ? ' selected="selected"' : '';
+            html += '<option value="' + code + '"' + sel + '>' + escapeHtml(BT_LAYOUTS[code].name) + '</option>';
+        }
+        select.innerHTML = html;
+    }
+
+    function populateVariantSelect(langCode, selectedVariant) {
+        var select = getEl("layoutVariantSelect");
+        var layout = BT_LAYOUTS[langCode];
+        var html = "";
+        if (layout) {
+            for (var variantCode in layout.variants) {
+                if (!layout.variants.hasOwnProperty(variantCode)) continue;
+                var sel = (variantCode === selectedVariant) ? ' selected="selected"' : '';
+                html += '<option value="' + variantCode + '"' + sel + '>' + escapeHtml(layout.variants[variantCode]) + '</option>';
+            }
+        }
+        select.innerHTML = html;
+    }
+
+    function setComposeToggleUI(on) {
+        composeOn = on;
+        getEl("btnComposeToggle").className = on ? "toggle on" : "toggle";
+    }
+
+    function toggleComposeKey() {
+        setComposeToggleUI(!composeOn);
+    }
+
+    function layoutDisplayLabel(langCode, variantCode) {
+        var layout = BT_LAYOUTS[langCode];
+        if (!layout) return "Use custom layout";
+        var text = layout.name;
+        var variantName = layout.variants[variantCode];
+        if (variantCode && variantName) text += ", " + variantName;
+        return "Use custom layout (" + text + ")";
+    }
 
     function showLayoutSettings() {
         window.scrollTo(0, 0);
         getEl("layoutOverlay").className = "layout-overlay visible";
+
+        request("/layout", function(data, err) {
+            var layout = (data && data.layout) || currentLayout;
+            var variant = (data && typeof data.variant === "string") ? data.variant : currentVariant;
+            var compose = !!(data && data.compose);
+
+            if (!BT_LAYOUTS[layout]) layout = "us";
+            if (!BT_LAYOUTS[layout].variants.hasOwnProperty(variant)) variant = "";
+
+            populateLangSelect(layout);
+            populateVariantSelect(layout, variant);
+            setComposeToggleUI(compose);
+        });
     }
 
     function hideLayoutSettings() {
         getEl("layoutOverlay").className = "layout-overlay";
+    }
+
+    function applyLayoutSettings() {
+        var layout = getEl("layoutLangSelect").value;
+        var variant = getEl("layoutVariantSelect").value;
+        var compose = composeOn;
+
+        showMessage("Applying layout...", false);
+        var url = "/layout-apply?layout=" + encodeURIComponent(layout) +
+            "&variant=" + encodeURIComponent(variant) +
+            "&compose=" + (compose ? "1" : "0");
+        request(url, function(data, err) {
+            if (err) {
+                showMessage("Error: " + err, true);
+                return;
+            }
+            if (data && data.ok) {
+                currentLayout = layout;
+                currentVariant = variant;
+                getEl("layoutLabel").innerHTML = escapeHtml(layoutDisplayLabel(layout, variant));
+                showMessage("Layout applied", false);
+                hideLayoutSettings();
+            } else {
+                showMessage(data && data.error ? data.error : "Failed to apply layout", true);
+            }
+        });
     }
 
     // ---- Confirm Dialog ----
@@ -699,6 +787,15 @@ var BTManager = (function() {
         bindBtn("btnDetailRemove", detailRemove);
         bindBtn("btnLayoutSettings", showLayoutSettings);
         bindBtn("btnLayoutClose", hideLayoutSettings);
+        bindBtn("btnComposeToggle", toggleComposeKey);
+        bindBtn("btnLayoutApply", applyLayoutSettings);
+
+        var langSelect = getEl("layoutLangSelect");
+        if (langSelect) {
+            langSelect.addEventListener("change", function() {
+                populateVariantSelect(this.value, "");
+            }, false);
+        }
         bindBtn("btnPairClose", cancelPair);
         bindBtn("btnLogClose", hideLogs);
         bindBtn("btnLogUp", scrollLogsUp);

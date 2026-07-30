@@ -56,17 +56,20 @@
         <div class="off-hint">Turn on to manage devices</div>
     </div>
 
-    <!-- Keyboard layout row -->
-    <div class="layout-row">
-        <span id="layoutLabel" class="layout-label">Use custom layout (French Standard)</span>
-        <button id="btnLayoutSettings" class="icon-btn" aria-label="Layout settings">
-            <img src="settings.png" alt="" class="icon-img" />
-        </button>
-    </div>
+    <!-- Bottom bar: layout row + footer, pinned to the bottom of the page -->
+    <div id="bottomBar" class="bottom-bar">
+        <!-- Keyboard layout row (hidden while the daemon is disabled) -->
+        <div id="layoutRow" class="layout-row">
+            <span id="layoutLabel" class="layout-label">Use custom layout (French Standard)</span>
+            <button id="btnLayoutSettings" class="icon-btn" aria-label="Layout settings">
+                <img src="settings.png" alt="" class="icon-img" />
+            </button>
+        </div>
 
-    <!-- Footer -->
-    <div id="footer" class="footer">
-        <span id="footerVersion">BT Manager</span> &middot; <span id="footerDebug" class="footer-link">Debug</span>
+        <!-- Footer -->
+        <div id="footer" class="footer">
+            <span id="footerVersion">BT Manager</span> &middot; <span id="footerDebug" class="footer-link">Debug</span>
+        </div>
     </div>
 
     <!-- Device detail overlay -->
@@ -145,14 +148,29 @@
         </div>
     </div>
 
-    <!-- Layout settings overlay (placeholder, filled in next) -->
+    <!-- Layout settings overlay -->
     <div id="layoutOverlay" class="layout-overlay">
         <div class="header">
             <h1>Layout</h1>
             <button id="btnLayoutClose" class="btn-close">&times;</button>
         </div>
         <div class="detail-body">
-            <p>Layout selection coming soon.</p>
+            <div class="section-label">Language</div>
+            <select id="layoutLangSelect" class="select-field"></select>
+
+            <div class="section-label">Variant</div>
+            <select id="layoutVariantSelect" class="select-field"></select>
+
+            <div class="toggle-row">
+                <span class="toggle-label">Compose Key (Right Alt)</span>
+                <button id="btnComposeToggle" class="toggle" aria-label="Toggle Compose Key">
+                    <span class="toggle-knob"></span>
+                </button>
+            </div>
+
+            <div class="detail-actions">
+                <button id="btnLayoutApply" class="btn btn-action">Apply</button>
+            </div>
         </div>
     </div>
 
@@ -167,6 +185,7 @@
         </div>
     </div>
 
+    <script src="layouts.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

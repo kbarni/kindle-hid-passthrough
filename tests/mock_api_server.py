@@ -37,6 +37,7 @@ state = {
         {"address": "AA:BB:CC:DD:EE:02", "name": "Page Turner", "protocol": "ble", "rssi": -62},
         {"address": "AA:BB:CC:DD:EE:03", "name": None, "protocol": "classic", "rssi": -78},
     ],
+    "keyboard": {"layout": "fr", "variant": "", "compose": False},
 }
 
 
@@ -151,6 +152,16 @@ class MockHandler(SimpleHTTPRequestHandler):
 
         elif self.path == "/clear-cache":
             self._json({"ok": True, "message": "Cache cleared"})
+
+        elif self.path == "/layout":
+            self._json({"ok": True, **state["keyboard"]})
+
+        elif self.path.startswith("/layout-apply?"):
+            layout = _parse_param(self.path, "layout")
+            variant = _parse_param(self.path, "variant") or ""
+            compose = _parse_param(self.path, "compose") == "1"
+            state["keyboard"] = {"layout": layout, "variant": variant, "compose": compose}
+            self._json({"ok": True, "message": "Layout applied"})
 
         else:
             self.directory = WAF_DIR

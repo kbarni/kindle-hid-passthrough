@@ -374,6 +374,28 @@ class Config:
 
         return devices
 
+    def get_keyboard_settings(self) -> dict:
+        """Load persisted keyboard layout/variant/compose settings.
+
+        Returns {} if nothing has been saved yet. X doesn't persist this
+        across reboots on its own - it's on the caller to re-apply on startup.
+        """
+        path = os.path.join(self.cache_dir, 'keyboard.json')
+        if not os.path.exists(path):
+            return {}
+        try:
+            with open(path, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return {}
+
+    def save_keyboard_settings(self, layout: str, variant: str, compose: bool):
+        """Persist the chosen keyboard layout/variant/compose setting."""
+        os.makedirs(self.cache_dir, exist_ok=True)
+        path = os.path.join(self.cache_dir, 'keyboard.json')
+        with open(path, 'w') as f:
+            json.dump({"layout": layout, "variant": variant, "compose": compose}, f)
+
 
 # Global singleton instance
 config = Config()

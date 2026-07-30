@@ -365,11 +365,21 @@ html {
     padding-top: 10px;
 }
 
+/* ---- Bottom Bar (layout row + footer, pinned to bottom) ---- */
+
+.bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+}
+
 /* ---- Layout Row ---- */
 
 .layout-row {
     padding: 16px 0;
-    border-bottom: 2px solid #000;
+    border-top: 2px solid #000;
     overflow: hidden;
 }
 
@@ -405,7 +415,22 @@ html {
     vertical-align: middle;
 }
 
-/* ---- Layout settings overlay (skeleton for now) ---- */
+.select-field {
+    display: block;
+    width: 100%;
+    min-height: 70px;
+    font-size: 34px;
+    padding: 8px 12px;
+    margin-bottom: 20px;
+    border: 3px solid #000;
+    background: #fff;
+    color: #000;
+    -webkit-appearance: none;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+}
+
+/* ---- Layout settings overlay ---- */
 
 .layout-overlay {
     display: none;
@@ -426,10 +451,6 @@ html {
 /* ---- Footer ---- */
 
 .footer {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
     text-align: center;
     font-size: 28px;
     color: #000;
@@ -697,6 +718,7 @@ html {
     .layout-label { font-size: 18px; line-height: 40px; }
     .icon-btn { min-width: 40px; min-height: 40px; padding: 4px; }
     .icon-img { width: 28px; height: 28px; }
+    .select-field { min-height: 40px; font-size: 20px; padding: 5px 8px; margin-bottom: 10px; }
     .footer { font-size: 15px; padding: 7px 12px 5px 12px; }
     .device-empty { font-size: 20px; }
     .message-bar { font-size: 20px; padding: 9px 12px; }

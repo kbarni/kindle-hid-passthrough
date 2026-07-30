@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+"""Generate layouts.json for the BTManager settings UI.
+
+Parses XKB's rules/base.lst (layout and variant names) and cross-validates
+every entry against the on-device symbols/ directory, since the Kindle's
+xkb-data install may not carry every variant base.lst advertises.
+
+Usage:
+    python3 scripts/gen_layouts_json.py \\
+        --base-lst temp/rules/base.lst \\
+        --symbols-dir temp/symbols \\
+        --out illusion/BTManager/layouts.json
+"""
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+SYMBOLS_BLOCK_RE_CACHE = {}
+
+
+def parse_section(lines, header):
+    """Extract lines between '! <header>' and the next '! ' section marker."""
+    section = []
+    in_section = False
+    for line in lines:
+        if line.startswith('! '):
+            in_section = (line[2:].strip() == header)
+            continue
+        if in_section and line.strip():
+            section.append(line)
+    return section
+
+
+def parse_layouts(lines):
+    """'! layout' section: '  <code>  <description>' -> {code: description}."""
+    layouts = {}
+    for line in parse_section(lines, 'layout'):
+        code, _, desc = line.strip().partition(' ')
+        layouts[code] = desc.strip()
+    return layouts
+
+
+def parse_variants(lines):
+    """'! variant' section: '  <variant>  <layout>: <description>'.
+
+    Returns {layout_code: [(variant_code, description), ...]} preserving
+    base.lst's order (which groups sensible defaults first).
+    """
+    variants_by_layout = {}
+    for line in parse_section(lines, 'variant'):
+        variant_code, _, rest = line.strip().partition(' ')
+        layout_code, _, desc = rest.strip().partition(':')
+        layout_code = layout_code.strip()
+        desc = desc.strip()
+        variants_by_layout.setdefault(layout_code, []).append((variant_code, desc))
+    return variants_by_layout
+
+
+def symbols_has_block(symbols_dir, layout_code, variant_code):
+    """Check whether symbols/<layout_code> defines an xkb_symbols "<variant_code>" block."""
+    path = symbols_dir / layout_code
+    if not path.is_file():
+        return False
+
+    if layout_code not in SYMBOLS_BLOCK_RE_CACHE:
+        text = path.read_text(encoding='utf-8', errors='ignore')
+        # Strip comments so a commented-out block doesn't count as present.
+        text = re.sub(r'//.*', '', text)
+        names = set(re.findall(r'xkb_symbols\s+"([^"]+)"', text))
+        SYMBOLS_BLOCK_RE_CACHE[layout_code] = names
+
+    return variant_code in SYMBOLS_BLOCK_RE_CACHE[layout_code]
+
+
+def build_layouts_json(base_lst_path, symbols_dir):
+    lines = base_lst_path.read_text(encoding='utf-8', errors='ignore').splitlines()
+    layouts = parse_layouts(lines)
+    variants_by_layout = parse_variants(lines)
+
+    result = {}
+    dropped_layouts = []
+    dropped_variants = []
+
+    for code, name in layouts.items():
+        if not (symbols_dir / code).is_file():
+            dropped_layouts.append(code)
+            continue
+
+        entry_variants = {"": "Standard"}
+        for variant_code, desc in variants_by_layout.get(code, []):
+            if symbols_has_block(symbols_dir, code, variant_code):
+                entry_variants[variant_code] = desc
+            else:
+                dropped_variants.append(f"{code}({variant_code})")
+
+        result[code] = {"name": name, "variants": entry_variants}
+
+    # Sort by display name for a nicer dropdown.
+    sorted_result = dict(sorted(result.items(), key=lambda kv: kv[1]["name"].lower()))
+
+    return sorted_result, dropped_layouts, dropped_variants
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--base-lst', type=Path, default=Path('temp/rules/base.lst'))
+    parser.add_argument('--symbols-dir', type=Path, default=Path('temp/symbols'))
+    parser.add_argument('--out', type=Path, default=Path('illusion/BTManager/layouts.json'))
+    parser.add_argument('--js-out', type=Path, default=Path('illusion/BTManager/layouts.js'),
+                         help="Also emit a plain <script> version, since the WAF app runs "
+                              "over file:// where XHR/fetch of a local .json can't be relied on.")
+    args = parser.parse_args()
+
+    if not args.base_lst.is_file():
+        sys.exit(f"error: base.lst not found at {args.base_lst}")
+    if not args.symbols_dir.is_dir():
+        sys.exit(f"error: symbols dir not found at {args.symbols_dir}")
+
+    layouts, dropped_layouts, dropped_variants = build_layouts_json(args.base_lst, args.symbols_dir)
+
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    with args.out.open('w', encoding='utf-8') as f:
+        json.dump(layouts, f, indent=2, ensure_ascii=False, sort_keys=False)
+        f.write('\n')
+
+    payload = json.dumps(layouts, indent=2, ensure_ascii=False)
+    args.js_out.parent.mkdir(parents=True, exist_ok=True)
+    with args.js_out.open('w', encoding='utf-8') as f:
+        f.write("// Generated by scripts/gen_layouts_json.py - do not edit by hand.\n")
+        f.write(f"var BT_LAYOUTS = {payload};\n")
+
+    total_variants = sum(len(v["variants"]) - 1 for v in layouts.values())  # exclude "Standard"
+    print(f"Wrote {args.out} and {args.js_out} ({len(layouts)} layouts, {total_variants} variants)")
+
+    if dropped_layouts:
+        print(f"\nDropped {len(dropped_layouts)} layout(s) with no matching symbols/ file:")
+        print("  " + ", ".join(sorted(dropped_layouts)))
+
+    if dropped_variants:
+        print(f"\nDropped {len(dropped_variants)} variant(s) with no matching xkb_symbols block:")
+        for item in dropped_variants:
+            print(f"  {item}")
+
+
+if __name__ == '__main__':
+    main()
